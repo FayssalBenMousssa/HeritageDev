@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCKdUc2Ha-fNulRn_9s9gGBQaGHpearxjw</string>
+	<key>GCM_SENDER_ID</key>
+	<string>339156829686</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.heritage.RunnerTests</string>
+	<key>PROJECT_ID</key>
+	<string>heritagebookapp-8f680</string>
+	<key>STORAGE_BUCKET</key>
+	<string>heritagebookapp-8f680.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:339156829686:ios:39c470ac09c0ba5422f3d7</string>
+</dict>
+</plist>
