@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
@@ -16,12 +17,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // Check if Firebase has been initialized
-  if (Firebase.apps.isNotEmpty) {
-    log('Firebase has been initialized successfully');
-  } else {
-    log('Firebase initialization failed');
-  }
 
 
   runApp(const MyApp());
