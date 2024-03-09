@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "339156829686",
+    "project_id": "heritagebookapp-8f680",
+    "storage_bucket": "heritagebookapp-8f680.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:339156829686:android:4577bfb21085d1c922f3d7",
+        "android_client_info": {
+          "package_name": "com.example.heritage"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "339156829686-a4uj316tgc4dv6i1b9pu281mlfbou07n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0M1767TnYmLsL_bjtq4mp4vT6C2z7Zxg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "339156829686-a4uj316tgc4dv6i1b9pu281mlfbou07n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "339156829686-7u6ihdmqo985f3c4ug0rbr2j23406998.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.heritage.RunnerTests"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

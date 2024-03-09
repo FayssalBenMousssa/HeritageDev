@@ -18,7 +18,31 @@ final ThemeData customTheme = ThemeData(
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
       backgroundColor: MaterialStateProperty.all(const Color(0xFF4F5D75)),
-      foregroundColor: MaterialStateProperty.all(const Color(0xFFFFFFFF)), // Set text color to white
+      foregroundColor: MaterialStateProperty.all(const Color(0xFFFFFFFF)),
+
+      shape: MaterialStateProperty.all(RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(3.0),
+      )),
     ),
+  ),
+
+  inputDecorationTheme: const InputDecorationTheme(
+    border: OutlineInputBorder(),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.grey),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.blue),
+    ),
+    labelStyle: TextStyle(color: Colors.black),
+    hintStyle: TextStyle(color: Colors.grey),
+  ),
+  // Existing colorScheme and other properties
+  dialogTheme: DialogTheme(  // Add this line
+    backgroundColor: Colors.white, // Set background color
+    shape: RoundedRectangleBorder(  // Set rounded corners
+      borderRadius: BorderRadius.circular(3.0),
+    ),
+    contentTextStyle: const TextStyle(fontSize: 16.0), // Set text style
   ),
 );

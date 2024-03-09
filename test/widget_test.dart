@@ -11,20 +11,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:heritage/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Store Data in Firebase test', (WidgetTester tester) async {
+    // Build your app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Find the email and password text fields and enter the credentials.
+    await tester.enterText(find.byKey(const Key('emailTextField')), 'HeritageBookApp@gmail.com');
+    await tester.enterText(find.byKey(const Key('passwordTextField')), 'AbirBerbeche');
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Tap the login button and trigger a frame.
+    await tester.tap(find.byKey(const Key('loginButton')));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the user is logged in successfully.
+    expect(find.text('Welcome to the Home Page!'), findsOneWidget);
+    expect(find.text('User Email: HeritageBookApp@gmail.com'), findsOneWidget);
+
+    // Tap the button to store data in Firebase.
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pump();
+
   });
+
+
 }
