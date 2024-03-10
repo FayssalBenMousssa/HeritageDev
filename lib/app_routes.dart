@@ -1,7 +1,11 @@
+
 import 'package:flutter/material.dart';
-import 'package:heritage/authentication/login.dart';
+import 'package:heritage/authentication/models/user_model.dart';
+import 'package:heritage/authentication/screens/login_screen.dart';
 import 'package:heritage/home_screen.dart';
-import 'package:heritage/authentication/registration_screen.dart';
+import 'package:heritage/authentication/screens/registration_screen.dart';
+import 'package:heritage/authentication/screens/profile_screen.dart';
+import 'package:heritage/authentication/screens/edit_profile_screen.dart';
 
 
 class AppRoutes {
@@ -9,6 +13,11 @@ class AppRoutes {
     '/login': (context) => const LoginScreen(),
     '/home': (context) => const HomeScreen(),
     '/registration_screen': (context) => const RegistrationScreen(),
+    '/profile': (context) => const ProfileScreen(),
+    '/edit_profile': (context) {
+      final User user = ModalRoute.of(context)!.settings.arguments as User;
+      return EditProfileScreen(user: user);
+    },
     // Add more routes as needed
   };
 }

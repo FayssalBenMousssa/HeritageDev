@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'user_model.dart'; // Import the User model
+import 'package:heritage/authentication/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:heritage/utiles/dialog_utils.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -34,7 +34,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         String? userId = userCredential.user?.uid; // Get the user ID
 
         User newUser = User(
-          id: userId, // Generate a unique ID for the user
+          id: userId,
           firstName: firstNameController.text,
           lastName: lastNameController.text,
           telephone: '',
@@ -44,10 +44,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           email: emailController.text,
           registrationDate: DateTime.now(),
           lastLogin: DateTime.now(),
+          photoUrl: '',
         );
         final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
 
-        // Save user data to Firestore
+        // Save user data to FireStore
         await usersCollection.doc(newUser.id).set(newUser.toMap());
 
         // Navigate to the HomeScreen after successful registration
@@ -55,7 +56,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       } catch (e) {
         // Handle registration errors
         String errorMessage = 'Registration failed. Please try again.';
-
         if (e is auth.FirebaseAuthException) {
           switch (e.code) {
             case 'weak-password':

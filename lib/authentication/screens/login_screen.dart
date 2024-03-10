@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../home_screen.dart';
+import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
+import '../../home_screen.dart';
+import '../models/user_model.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -18,16 +21,37 @@ class LoginScreen extends StatelessWidget {
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
         if (googleUser != null) {
           final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-          final credential = GoogleAuthProvider.credential(
-            accessToken: googleAuth.accessToken,
-            idToken: googleAuth.idToken,
+          String firstName ='';
+          String lastName ='';
+            List<String> nameParts = googleUser.displayName!.split(' ');
+            if (nameParts.length > 1) {
+                firstName = nameParts[0];
+                lastName = nameParts.sublist(1).join(' ');
+            } else {
+              firstName = nameParts[0];
+            }
+          final credential = auth.GoogleAuthProvider.credential(accessToken: googleAuth.accessToken, idToken: googleAuth.idToken,);
+          auth.UserCredential userCredential = await auth.FirebaseAuth.instance.signInWithCredential(credential);
+          final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
+
+          User newUser = User(
+            id: userCredential.user?.uid,
+            firstName: firstName,
+            lastName: lastName,
+            telephone: null,
+            address: null,
+            password: null,
+            role: 'user',
+            email: googleUser.email,
+            registrationDate: DateTime.now(),
+            lastLogin: DateTime.now(),
+            photoUrl: googleUser.photoUrl,
           );
-          UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+          // Save user data to Firestore
+          await usersCollection.doc(userCredential.user?.uid).set(newUser.toMap());
           // Navigate to the HomeScreen after successful login
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeScreen()),);
         }
       } catch (e) {
         // Handle errors, e.g., display an error message
@@ -37,7 +61,7 @@ class LoginScreen extends StatelessWidget {
 
     Future<void> signInWithEmailAndPassword(BuildContext context) async {
       try {
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        auth.UserCredential userCredential = await auth.FirebaseAuth.instance.signInWithEmailAndPassword(
           email: emailController.text,
           password: passwordController.text,
         );
