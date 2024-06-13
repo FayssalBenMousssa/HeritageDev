@@ -39,7 +39,7 @@ class CategoryScreenState extends State<CategoryScreen> {
           List<Category> categories = snapshot.data!.docs.map((doc) {
             return Category.fromMap(doc.data() as Map<String, dynamic>);
           }).toList();
-
+//
           return ListView.builder(
             itemCount: categories.length,
             itemBuilder: (context, index) {
