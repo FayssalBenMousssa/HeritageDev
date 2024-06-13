@@ -45,6 +45,12 @@ class AppLeftDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/profile');
             },
           ),
+          ListTile(
+            title: const Text('category'),
+            onTap: () {
+              Navigator.pushNamed(context, '/category');
+            },
+          ),
           // Add more list items as needed
           const Divider(),
           ListTile(

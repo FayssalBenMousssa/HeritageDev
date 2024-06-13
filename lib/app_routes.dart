@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:heritage/authentication/models/user_model.dart';
 import 'package:heritage/authentication/screens/login_screen.dart';
@@ -6,7 +5,7 @@ import 'package:heritage/home_screen.dart';
 import 'package:heritage/authentication/screens/registration_screen.dart';
 import 'package:heritage/authentication/screens/profile_screen.dart';
 import 'package:heritage/authentication/screens/edit_profile_screen.dart';
-
+import 'package:heritage/photo_book/screens/category_screen.dart';
 
 class AppRoutes {
   static final routes = <String, WidgetBuilder>{
@@ -18,6 +17,7 @@ class AppRoutes {
       final User user = ModalRoute.of(context)!.settings.arguments as User;
       return EditProfileScreen(user: user);
     },
+    '/category': (context) => const CategoryScreen(),
     // Add more routes as needed
   };
 }
