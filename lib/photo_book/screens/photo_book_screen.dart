@@ -1,30 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:heritage/photo_book/models/photo_book.dart'; // Adjust paths as per your project structure
+import 'package:heritage/photo_book/screens/add_photo_book_screen.dart'; // Assuming you have this screen
+//import 'package:heritage/photo_book/screens/edit_photo_book_screen.dart'; // Assuming you have this screen
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:heritage/photo_book/models/category.dart'; // Adjust paths as per your project structure
-import 'package:heritage/photo_book/screens/add_category_screen.dart'; // Assuming you have these screens
-import 'package:heritage/photo_book/screens/edit_category_screen.dart'; // Assuming you have these screens
 
-class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({Key? key}) : super(key: key);
+class PhotoBookScreen extends StatefulWidget {
+  const PhotoBookScreen({Key? key}) : super(key: key);
 
   @override
-  _CategoryScreenState createState() => _CategoryScreenState();
+  _PhotoBookScreenState createState() => _PhotoBookScreenState();
 }
 
-class _CategoryScreenState extends State<CategoryScreen> {
-  final CollectionReference categoriesCollection =
-  FirebaseFirestore.instance.collection('categories');
+class _PhotoBookScreenState extends State<PhotoBookScreen> {
+  final CollectionReference photoBooksCollection =
+  FirebaseFirestore.instance.collection('photoBooks');
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories'),
+        title: const Text('Photo Books'),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: categoriesCollection.snapshots(),
+        stream: photoBooksCollection.snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -38,37 +37,37 @@ class _CategoryScreenState extends State<CategoryScreen> {
             );
           }
 
-          List<Category> categories = snapshot.data!.docs
-              .map((doc) => Category.fromMap(doc.data() as Map<String, dynamic>))
+          List<PhotoBook> photoBooks = snapshot.data!.docs
+              .map((doc) => PhotoBook.fromMap(doc.data() as Map<String, dynamic>))
               .toList();
 
           return ListView.builder(
-            itemCount: categories.length,
+            itemCount: photoBooks.length,
             itemBuilder: (context, index) {
-              Category category = categories[index];
-              return _buildDismissibleCategoryListItem(category);
+              PhotoBook photoBook = photoBooks[index];
+              return _buildDismissiblePhotoBookListItem(photoBook);
             },
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => navigateToAddCategoryScreen(),
+        onPressed: () => navigateToAddPhotoBookScreen(),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildDismissibleCategoryListItem(Category category) {
+  Widget _buildDismissiblePhotoBookListItem(PhotoBook photoBook) {
     return Dismissible(
-      key: Key(category.id),
+      key: Key(photoBook.id.toString()),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
         return await showDeleteConfirmationDialog();
       },
       onDismissed: (direction) {
-        deleteCategory(category.id);
+        deletePhotoBook(photoBook.id.toString());
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${category.categoryName} deleted')),
+          SnackBar(content: Text('${photoBook.title} deleted')),
         );
       },
       background: Container(
@@ -86,33 +85,29 @@ class _CategoryScreenState extends State<CategoryScreen> {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              // Image
+              // Cover Image
               Container(
                 width: 100,
                 height: 100,
-                child: category.imageUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                  imageUrl: category.imageUrl,
-                  placeholder: (context, url) =>
-                      CircularProgressIndicator(),
-                  errorWidget: (context, url, error) =>
-                      Icon(Icons.error),
+                child: CachedNetworkImage(
+                  imageUrl: photoBook.coverImageUrl,
+                  placeholder: (context, url) => CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => Icon(Icons.error),
                   fit: BoxFit.cover,
                   fadeInDuration: const Duration(milliseconds: 300),
                   fadeOutDuration: const Duration(milliseconds: 300),
-                )
-                    : Container(),
+                ),
               ),
               SizedBox(width: 16.0),
-              // Name
+              // Title
               Expanded(
-                child: Text(category.categoryName),
+                child: Text(photoBook.title),
               ),
               SizedBox(width: 16.0),
               // Edit Icon
               IconButton(
                 icon: const Icon(Icons.edit),
-                onPressed: () => navigateToEditCategoryScreen(category),
+                onPressed: () => navigateToEditPhotoBookScreen(photoBook),
               ),
             ],
           ),
@@ -126,8 +121,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Delete Category'),
-          content: const Text('Are you sure you want to delete this category?'),
+          title: const Text('Delete Photo Book'),
+          content: const Text('Are you sure you want to delete this photo book?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -143,24 +138,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  void navigateToAddCategoryScreen() {
+  void navigateToAddPhotoBookScreen() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddCategoryScreen()),
+      MaterialPageRoute(builder: (context) => const AddPhotoBookScreen()),
     );
   }
 
-  void navigateToEditCategoryScreen(Category category) {
-    Navigator.push(
+  void navigateToEditPhotoBookScreen(PhotoBook photoBook) {
+   /* Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditCategoryScreen(category: category),
+        builder: (context) => EditPhotoBookScreen(photoBook: photoBook),
       ),
-    );
+    );*/
   }
 
-  void deleteCategory(String categoryId) {
-    categoriesCollection.doc(categoryId).delete();
+  void deletePhotoBook(String photoBookId) {
+    photoBooksCollection.doc(photoBookId).delete();
   }
 }
-

@@ -1,8 +1,8 @@
-import 'package:heritage/photo_book/models/category.dart';
+import 'package:heritage/photo_book/models/category.dart'; // Adjust paths as per your project structure
 import 'package:heritage/photo_book/models/page.dart';
 
 class PhotoBook {
-  final int id;
+  final String id;
   final List<Page> pages;
   final String title;
   final String form;
@@ -15,6 +15,7 @@ class PhotoBook {
   final double miniature;
   final double printingTime;
   final List<Category> categories;
+  final String coverImageUrl; // Added property for cover image URL
 
   PhotoBook({
     required this.id,
@@ -30,6 +31,7 @@ class PhotoBook {
     required this.miniature,
     required this.printingTime,
     required this.categories,
+    required this.coverImageUrl, // Initialize in constructor
   });
 
   Map<String, dynamic> toMap() {
@@ -47,6 +49,7 @@ class PhotoBook {
       'miniature': miniature,
       'printingTime': printingTime,
       'categories': categories.map((category) => category.toMap()).toList(),
+      'coverImageUrl': coverImageUrl, // Serialize cover image URL
     };
   }
 
@@ -68,6 +71,7 @@ class PhotoBook {
       categories: List<Category>.from(
           map['categories']?.map((category) => Category.fromMap(category)) ??
               []),
+      coverImageUrl: map['coverImageUrl'] ?? '', // Deserialize cover image URL
     );
   }
 }

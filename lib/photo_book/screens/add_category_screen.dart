@@ -118,6 +118,19 @@ class AddCategoryFormState extends State<AddCategoryForm> {
       });
     }
 
+    // Check if category name already exists
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('categories')
+        .where('categoryName', isEqualTo: categoryName)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      setState(() {
+        categoryError = 'Category name already exists. Please choose a different name.';
+      });
+      return;
+    }
+
     Category newCategory = Category(
       id: '',
       categoryName: categoryName,
@@ -147,9 +160,15 @@ class AddCategoryFormState extends State<AddCategoryForm> {
           .collection('categories')
           .doc(categoryId)
           .update({'id': categoryId});
-    });
 
-    Navigator.pop(context); // Navigate back to the previous screen
+      // Show Snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Category added'))
+      );
+
+      // Navigate back to the list of categories
+      Navigator.pop(context); // Assuming this pops back to the list of categories
+    });
   }
 
   Future<void> _selectImage() async {
@@ -165,4 +184,5 @@ class AddCategoryFormState extends State<AddCategoryForm> {
     }
   }
 }
+
 

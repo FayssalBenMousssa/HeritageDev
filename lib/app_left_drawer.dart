@@ -6,18 +6,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AppLeftDrawer extends StatelessWidget {
   final User? user;
 
-  const AppLeftDrawer({super.key, required this.user});
+  const AppLeftDrawer({Key? key, required this.user});
 
   void _logout(BuildContext context) {
-    // Capture the context before the async operation
     final currentContext = context;
     FirebaseAuth.instance.signOut().then((_) {
-      // Close the drawer using the captured context
       Navigator.pop(currentContext);
-      // Navigate to the login page using the captured context
       Navigator.pushReplacementNamed(currentContext, '/login');
     }).catchError((error) {
-      // Handle any errors that occur during sign out
       log('Error signing out: $error');
     });
   }
@@ -31,27 +27,31 @@ class AppLeftDrawer extends StatelessWidget {
           UserAccountsDrawerHeader(
             accountName: Text(user?.displayName ?? 'No name available'),
             accountEmail: Text(user?.email ?? 'No email available'),
-
           ),
           ListTile(
-            title: const Text('home'),
+            title: const Text('Home'),
             onTap: () {
               Navigator.pushNamed(context, '/home');
             },
           ),
           ListTile(
-            title: const Text('profil'),
+            title: const Text('Profile'),
             onTap: () {
               Navigator.pushNamed(context, '/profile');
             },
           ),
           ListTile(
-            title: const Text('category'),
+            title: const Text('Category'),
             onTap: () {
               Navigator.pushNamed(context, '/category');
             },
           ),
-          // Add more list items as needed
+          ListTile(
+            title: const Text('Photo Books 4.00 '), // Add menu item for Photo Books
+            onTap: () {
+              Navigator.pushNamed(context, '/photo_book');
+            },
+          ),
           const Divider(),
           ListTile(
             title: const Text('Logout'),
