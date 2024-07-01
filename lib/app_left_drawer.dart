@@ -47,7 +47,7 @@ class AppLeftDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            title: const Text('Photo Books 4.00 '), // Add menu item for Photo Books
+            title: const Text('Photo Books 7.01 '), // Add menu item for Photo Books
             onTap: () {
               Navigator.pushNamed(context, '/photo_book');
             },

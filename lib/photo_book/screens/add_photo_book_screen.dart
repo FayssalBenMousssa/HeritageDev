@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/photo_book.dart'; // Adjust import as per your project structure
 
@@ -62,6 +63,8 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     // Validate form fields
     if (_titleController.text.isEmpty || _descriptionController.text.isEmpty) {
       // Show error or handle validation as needed
+      /// hena khessek code de add
+      /// ok hana ne7awel ne9adhom
       return;
     }
 
@@ -85,7 +88,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
 
     // Optionally, save newPhotoBook to Firestore or perform other operations
     // For example:
-    // FirebaseFirestore.instance.collection('photoBooks').add(newPhotoBook.toMap());
+     FirebaseFirestore.instance.collection('photoBooks').add(newPhotoBook.toMap());
 
     // Navigate back to previous screen or perform other navigation logic
     Navigator.pop(context);
