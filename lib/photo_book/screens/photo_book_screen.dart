@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:heritage/photo_book/models/photo_book.dart'; // Adjust paths as per your project structure
-import 'package:heritage/photo_book/screens/add_photo_book_screen.dart'; // Assuming you have this screen
-//import 'package:heritage/photo_book/screens/edit_photo_book_screen.dart'; // Assuming you have this screen
+import 'package:heritage/photo_book/models/photo_book.dart';
+import 'package:heritage/photo_book/screens/add_photo_book_screen.dart';
+import 'package:heritage/photo_book/screens/photo_book_detail_screen.dart';
+import 'package:heritage/photo_book/screens/edit_photo_book_screen.dart'; // Import EditPhotoBookScreen
 import 'package:cached_network_image/cached_network_image.dart';
 
 class PhotoBookScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class PhotoBookScreen extends StatefulWidget {
 class _PhotoBookScreenState extends State<PhotoBookScreen> {
   final CollectionReference photoBooksCollection =
   FirebaseFirestore.instance.collection('photoBooks');
+
+  List<PhotoBook> _photoBooks = [];
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +40,30 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
             );
           }
 
-          List<PhotoBook> photoBooks = snapshot.data!.docs
-              .map((doc) => PhotoBook.fromMap(doc.data() as Map<String, dynamic>))
-              .toList();
+          if (!snapshot.hasData || snapshot.data == null || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Text('No photo books found'),
+            );
+          }
+
+          try {
+            _photoBooks = snapshot.data!.docs
+                .map((doc) {
+              print('Document data: ${doc.data()}'); // Log document data
+              return PhotoBook.fromMap(doc.data() as Map<String, dynamic>);
+            })
+                .toList();
+          } catch (e) {
+            return Center(
+              child: Text('Error processing data: $e'),
+            );
+          }
 
           return ListView.builder(
-            itemCount: photoBooks.length,
+            itemCount: _photoBooks.length,
             itemBuilder: (context, index) {
-              PhotoBook photoBook = photoBooks[index];
-              return _buildDismissiblePhotoBookListItem(photoBook);
+              PhotoBook photoBook = _photoBooks[index];
+              return _buildDismissiblePhotoBookListItem(photoBook, index);
             },
           );
         },
@@ -57,7 +75,7 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
     );
   }
 
-  Widget _buildDismissiblePhotoBookListItem(PhotoBook photoBook) {
+  Widget _buildDismissiblePhotoBookListItem(PhotoBook photoBook, int index) {
     return Dismissible(
       key: Key(photoBook.id.toString()),
       direction: DismissDirection.endToStart,
@@ -66,6 +84,9 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
       },
       onDismissed: (direction) {
         deletePhotoBook(photoBook.id.toString());
+        setState(() {
+          _photoBooks.removeAt(index); // Remove the item from the list
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${photoBook.title} deleted')),
         );
@@ -85,29 +106,18 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              // Cover Image
-              Container(
-                width: 100,
-                height: 100,
-                child: CachedNetworkImage(
-                  imageUrl: photoBook.coverImageUrl,
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                  fit: BoxFit.cover,
-                  fadeInDuration: const Duration(milliseconds: 300),
-                  fadeOutDuration: const Duration(milliseconds: 300),
-                ),
-              ),
               SizedBox(width: 16.0),
-              // Title
               Expanded(
                 child: Text(photoBook.title),
               ),
               SizedBox(width: 16.0),
-              // Edit Icon
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => navigateToEditPhotoBookScreen(photoBook),
+              ),
+              IconButton(
+                icon: const Icon(Icons.info),
+                onPressed: () => navigateToDetailPhotoBookScreen(photoBook),
               ),
             ],
           ),
@@ -146,12 +156,21 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
   }
 
   void navigateToEditPhotoBookScreen(PhotoBook photoBook) {
-   /* Navigator.push(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => EditPhotoBookScreen(photoBook: photoBook),
       ),
-    );*/
+    );
+  }
+
+  void navigateToDetailPhotoBookScreen(PhotoBook photoBook) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PhotoBookDetailScreen(photoBook: photoBook),
+      ),
+    );
   }
 
   void deletePhotoBook(String photoBookId) {

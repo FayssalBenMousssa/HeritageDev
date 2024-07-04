@@ -1,27 +1,30 @@
-import 'package:heritage/photo_book/models/category.dart'; // Adjust paths as per your project structure
-import 'package:heritage/photo_book/models/page.dart';
+import 'package:heritage/photo_book/models/category.dart';
+import 'package:heritage/photo_book/models/book_form.dart';
+import 'package:heritage/photo_book/models/book_type.dart'; // Renamed book_type.dart to book_type.dart
+import 'package:heritage/photo_book/models/paper_finish.dart';
+import 'package:heritage/photo_book/models/cover_finish.dart';
 
 class PhotoBook {
   final String id;
-  final List<Page> pages;
+  final List<String> pages;
   final String title;
-  final String form;
+  final List<BookForm> formBook;
   final String description;
-  final String type;
+  final List<BookType> type;
   final String size;
-  final String paperFinish;
-  final String coverFinish;
+  final List<PaperFinish> paperFinish;
+  final List<CoverFinish> coverFinish;
   final double price;
   final double miniature;
   final double printingTime;
   final List<Category> categories;
-  final String coverImageUrl; // Added property for cover image URL
+  final String coverImageUrl;
 
   PhotoBook({
     required this.id,
     required this.pages,
     required this.title,
-    required this.form,
+    required this.formBook,
     required this.description,
     required this.type,
     required this.size,
@@ -31,47 +34,60 @@ class PhotoBook {
     required this.miniature,
     required this.printingTime,
     required this.categories,
-    required this.coverImageUrl, // Initialize in constructor
+    required this.coverImageUrl,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'pages': pages.map((page) => page.toMap()).toList(),
+      'pages': pages,
       'title': title,
-      'form': form,
+      'formBook': formBook.map((f) => f.toMap()).toList(),
       'description': description,
-      'type': type,
+      'type': type.map((t) => t.toMap()).toList(),
       'size': size,
-      'paperFinish': paperFinish,
-      'coverFinish': coverFinish,
+      'paperFinish': paperFinish.map((pf) => pf.toMap()).toList(),
+      'coverFinish': coverFinish.map((cf) => cf.toMap()).toList(),
       'price': price,
       'miniature': miniature,
       'printingTime': printingTime,
       'categories': categories.map((category) => category.toMap()).toList(),
-      'coverImageUrl': coverImageUrl, // Serialize cover image URL
+      'coverImageUrl': coverImageUrl,
     };
   }
 
-  factory PhotoBook.fromMap(Map<String, dynamic> map) {
-    return PhotoBook(
-      id: map['id'],
-      pages: List<Page>.from(
-          map['pages']?.map((page) => Page.fromMap(page)) ?? []),
-      title: map['title'] ?? '',
-      form: map['form'] ?? '',
-      description: map['description'] ?? '',
-      type: map['type'] ?? '',
-      size: map['size'] ?? '',
-      paperFinish: map['paperFinish'] ?? '',
-      coverFinish: map['coverFinish'] ?? '',
-      price: map['price'] ?? 0.0,
-      miniature: map['miniature'] ?? 0.0,
-      printingTime: map['printingTime'] ?? 0.0,
-      categories: List<Category>.from(
-          map['categories']?.map((category) => Category.fromMap(category)) ??
-              []),
-      coverImageUrl: map['coverImageUrl'] ?? '', // Deserialize cover image URL
-    );
+  static PhotoBook fromMap(Map<String, dynamic> map) {
+    try {
+      return PhotoBook(
+        id: map['id'] ?? '',
+        pages: List<String>.from(map['pages'] ?? []),
+        title: map['title'] ?? '',
+        formBook: map['formBook'] != null && map['formBook'] is List
+            ? List<BookForm>.from((map['formBook'] as List).map((formBookMap) => BookForm.fromMap(formBookMap)))
+            : [],
+        description: map['description'] ?? '',
+        type: map['type'] != null && map['type'] is List
+            ? List<BookType>.from((map['type'] as List).map((typeMap) => BookType.fromMap(typeMap)))
+            : [],
+        size: map['size'] ?? '',
+        paperFinish: map['paperFinish'] != null && map['paperFinish'] is List
+            ? List<PaperFinish>.from((map['paperFinish'] as List).map((pfMap) => PaperFinish.fromMap(pfMap)))
+            : [],
+        coverFinish: map['coverFinish'] != null && map['coverFinish'] is List
+            ? List<CoverFinish>.from((map['coverFinish'] as List).map((cfMap) => CoverFinish.fromMap(cfMap)))
+            : [],
+        price: map['price'] ?? 0.0,
+        miniature: map['miniature'] ?? 0.0,
+        printingTime: map['printingTime'] ?? 0.0,
+        categories: map['categories'] != null && map['categories'] is List
+            ? List<Category>.from((map['categories'] as List).map((categoryMap) => Category.fromMap(categoryMap)))
+            : [],
+        coverImageUrl: map['coverImageUrl'] ?? '',
+      );
+    } catch (e) {
+      print('Error creating PhotoBook from map: $e');
+      throw e; // or handle the error as needed
+    }
   }
+
 }

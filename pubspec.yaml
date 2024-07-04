@@ -42,7 +42,7 @@ dependencies:
   intl_phone_field: ^3.2.0
   image_picker: ^1.0.8
   firebase_storage: ^11.6.9
-
+  flutter_form_builder: ^7.0.0
 
 
 
