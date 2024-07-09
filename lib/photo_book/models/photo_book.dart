@@ -1,8 +1,9 @@
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/book_form.dart';
-import 'package:heritage/photo_book/models/book_type.dart'; // Renamed book_type.dart to book_type.dart
+import 'package:heritage/photo_book/models/book_type.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
+import 'package:heritage/photo_book/models/size.dart';
 
 class PhotoBook {
   final String id;
@@ -11,14 +12,14 @@ class PhotoBook {
   final List<BookForm> formBook;
   final String description;
   final List<BookType> type;
-  final String size;
+  final List<Size> size;
   final List<PaperFinish> paperFinish;
   final List<CoverFinish> coverFinish;
   final double price;
-  final double miniature;
+  final String miniature;
   final double printingTime;
   final List<Category> categories;
-  final String coverImageUrl;
+   String coverImageUrl;
 
   PhotoBook({
     required this.id,
@@ -27,7 +28,7 @@ class PhotoBook {
     required this.formBook,
     required this.description,
     required this.type,
-    required this.size,
+    required this.size, // Changed from String to List<Size>
     required this.paperFinish,
     required this.coverFinish,
     required this.price,
@@ -45,7 +46,7 @@ class PhotoBook {
       'formBook': formBook.map((f) => f.toMap()).toList(),
       'description': description,
       'type': type.map((t) => t.toMap()).toList(),
-      'size': size,
+      'size': size.map((s) => s.toMap()).toList(), // Convert List<Size> to List<Map>
       'paperFinish': paperFinish.map((pf) => pf.toMap()).toList(),
       'coverFinish': coverFinish.map((cf) => cf.toMap()).toList(),
       'price': price,
@@ -69,7 +70,9 @@ class PhotoBook {
         type: map['type'] != null && map['type'] is List
             ? List<BookType>.from((map['type'] as List).map((typeMap) => BookType.fromMap(typeMap)))
             : [],
-        size: map['size'] ?? '',
+        size: map['size'] != null && map['size'] is List
+            ? List<Size>.from((map['size'] as List).map((sizeMap) => Size.fromMap(sizeMap)))
+            : [],
         paperFinish: map['paperFinish'] != null && map['paperFinish'] is List
             ? List<PaperFinish>.from((map['paperFinish'] as List).map((pfMap) => PaperFinish.fromMap(pfMap)))
             : [],
@@ -89,5 +92,4 @@ class PhotoBook {
       throw e; // or handle the error as needed
     }
   }
-
 }

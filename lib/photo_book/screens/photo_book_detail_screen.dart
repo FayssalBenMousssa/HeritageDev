@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:heritage/photo_book/models/photo_book.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:image_picker/image_picker.dart';
+import 'package:heritage/photo_book/models/photo_book.dart';
+import 'package:page_flip/page_flip.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PhotoBookDetailScreen extends StatefulWidget {
   final PhotoBook photoBook;
@@ -16,21 +19,83 @@ class PhotoBookDetailScreen extends StatefulWidget {
 }
 
 class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> {
-  File? _coverImageFile;
-  Image? _coverImagePreview;
+  final _controller = GlobalKey<PageFlipWidgetState>();
+  File? _imageFile;
+  Widget? _imagePreview;
+  bool _isUploading = false; // Track the upload state
 
   @override
   void initState() {
     super.initState();
-    _loadCoverImage();
+    _loadInitialImage();
   }
 
-  Future<void> _loadCoverImage() async {
-    if (widget.photoBook.coverImageUrl.isNotEmpty) {
+  void _loadInitialImage() {
+    setState(() {
+      _imagePreview = widget.photoBook.coverImageUrl.isNotEmpty
+          ? CachedNetworkImage(
+        imageUrl: widget.photoBook.coverImageUrl,
+        placeholder: (context, url) => const CircularProgressIndicator(),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
+      )
+          : Image.asset('assets/logo.png'); // Replace with your default image asset path
+    });
+  }
+
+  // Method to handle updating cover image URL
+  Future<void> _updateCoverImageUrl() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
       setState(() {
-        _coverImagePreview = Image.network(widget.photoBook.coverImageUrl);
+        _imageFile = File(pickedFile.path);
+        _imagePreview = Image.file(_imageFile!);
+        _isUploading = true; // Start uploading
       });
+
+      if (_imageFile != null) {
+        firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
+            .ref()
+            .child('photobook_cover_images')
+            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await ref.putFile(_imageFile!);
+        String imageUrl = await ref.getDownloadURL();
+
+        try {
+          await FirebaseFirestore.instance
+              .collection('photoBooks')
+              .doc(widget.photoBook.id)
+              .update({'coverImageUrl': imageUrl});
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Cover image updated successfully')),
+          );
+
+          setState(() {
+            _imagePreview = CachedNetworkImage(
+              imageUrl: imageUrl,
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
+            );
+            _isUploading = false; // End uploading
+          });
+        } catch (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update Firestore: $error')),
+          );
+          setState(() {
+            _isUploading = false; // End uploading in case of error
+          });
+        }
+      }
     }
+  }
+
+  Widget _buildCoverImagePage() {
+    return SizedBox.expand(
+      child: _imagePreview,
+    );
   }
 
   @override
@@ -39,49 +104,70 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> {
       appBar: AppBar(
         title: Text(widget.photoBook.title),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.photoBook.title,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_imagePreview != null) _buildImageThumbnail(),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.photoBook.title,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Description: ${widget.photoBook.description}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Size: ${widget.photoBook.size}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Price: \$${widget.photoBook.price.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Miniature: ${widget.photoBook.miniature}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Printing Time: ${widget.photoBook.printingTime} days',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16), // Add spacing between Printing Time and button
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Description: ${widget.photoBook.description}',
-                style: const TextStyle(fontSize: 16),
+            ),
+            Container(
+              height: 300,
+              margin: const EdgeInsets.all(15.0),
+              padding: const EdgeInsets.all(3.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blueAccent),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Size: ${widget.photoBook.size}',
-                style: const TextStyle(fontSize: 16),
+              child: PageFlipWidget(
+                key: _controller,
+                backgroundColor: Colors.white,
+                lastPage: Container(
+                  color: Colors.white,
+                  child: const Center(child: Text('Last Page!')),
+                ),
+                children: <Widget>[
+                  _buildCoverImagePage(),
+                  for (var i = 0; i < 10; i++) DemoPage(page: i),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Price: \$${widget.photoBook.price.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Miniature: ${widget.photoBook.miniature}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Printing Time: ${widget.photoBook.printingTime} days',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              if (_coverImagePreview != null) _buildImageThumbnail(),
-              ElevatedButton(
-                onPressed: _selectAndSaveImage,
-                child: const Text('Change and Save Cover Image'),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -93,57 +179,80 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> {
       children: [
         Card(
           child: AspectRatio(
-            aspectRatio: 1.0,
-            child: _coverImagePreview!,
+            aspectRatio: 1.0, // Set the aspect ratio to 1:1
+            child: _imagePreview!,
+          ),
+        ),
+        if (_isUploading) // Show CircularProgressIndicator if uploading
+          const Positioned.fill(
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        Positioned(
+          top: 10,
+          right: 10,
+          child: IconButton(
+            onPressed: _updateCoverImageUrl,
+            icon: const Icon(Icons.edit),
+            color: Colors.black54,
           ),
         ),
       ],
     );
   }
+}
 
-  Future<void> _selectAndSaveImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+class DemoPage extends StatelessWidget {
+  final int page;
+  final Random _random = Random();
 
-    if (pickedFile != null) {
-      setState(() {
-        _coverImageFile = File(pickedFile.path);
-        _coverImagePreview = Image.file(_coverImageFile!);
-      });
+  DemoPage({Key? key, required this.page}) : super(key: key);
 
-      await _saveCoverImage();
-    }
+  Color _getRandomColor() {
+    return Color.fromARGB(
+      255,
+      _random.nextInt(256),
+      _random.nextInt(256),
+      _random.nextInt(256),
+    );
   }
 
-  Future<void> _saveCoverImage() async {
-    if (_coverImageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a cover image')),
-      );
-      return;
-    }
-
-    firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
-        .ref()
-        .child('photo_book_covers')
-        .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-
-    await ref.putFile(_coverImageFile!);
-    String coverImageUrl = await ref.getDownloadURL();
-
-    // Update photo book's cover image URL in Firestore
-    FirebaseFirestore.instance
-        .collection('photoBooks')
-        .doc(widget.photoBook.id)
-        .update({'coverImageUrl': coverImageUrl})
-        .then((value) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cover image saved successfully')),
-      );
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save cover image: $error')),
-      );
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 250,
+                  height: 110,
+                  color: _getRandomColor(),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: 250,
+                  height: 110,
+                  color: _getRandomColor(),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Page $page',
+              style: const TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

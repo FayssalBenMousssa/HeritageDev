@@ -1,20 +1,15 @@
 class Category {
-  String id;
-  String categoryName;
-  String imageUrl;
+  final String id;
+  final String categoryName;
+  final String imageUrl;
 
-  Category({
-    required this.id,
-    required this.categoryName,
-    required this.imageUrl,
-  });
+  Category({required this.id, required this.categoryName, required this.imageUrl});
 
-  factory Category.fromMap(Map<String, dynamic> map) {
+  factory Category.fromMap(Map<String, dynamic> data) {
     return Category(
-      id: map['id'],
-      categoryName: map['categoryName'],
-      imageUrl: map['imageUrl'], // Assigns an empty string if the value is null
-
+      id: data['id'] ?? '',
+      categoryName: data['categoryName'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
     );
   }
 
@@ -25,4 +20,16 @@ class Category {
       'imageUrl': imageUrl,
     };
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Category &&
+        other.id == id &&
+        other.categoryName == categoryName &&
+        other.imageUrl == imageUrl;
+  }
+
+  @override
+  int get hashCode => id.hashCode ^ categoryName.hashCode ^ imageUrl.hashCode;
 }

@@ -24,4 +24,16 @@ class CoverFinish {
       description: map['description'] ?? '',
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CoverFinish &&
+        other.id == id &&
+        other.name == name &&
+        other.description == description;
+  }
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode ^ description.hashCode;
 }

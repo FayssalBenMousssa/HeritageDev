@@ -24,4 +24,16 @@ class BookType {
       description: map['description'] ?? '',
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is BookType &&
+        other.id == id &&
+        other.name == name &&
+        other.description == description;
+  }
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode ^ description.hashCode;
 }

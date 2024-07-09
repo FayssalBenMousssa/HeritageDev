@@ -7,6 +7,7 @@ import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/book_form.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
+import 'package:heritage/photo_book/models/size.dart'; // Import the Size class
 
 class AddPhotoBookScreen extends StatelessWidget {
   const AddPhotoBookScreen({Key? key}) : super(key: key);
@@ -37,6 +38,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
   List<BookType> _types = [];
   List<PaperFinish> _paperFinishes = [];
   List<CoverFinish> _coverFinishes = [];
+  List<Size> _sizes = []; // Added list to store sizes
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     _fetchTypes();
     _fetchPaperFinishes();
     _fetchCoverFinishes();
+    _fetchSizes(); // Fetch sizes when initializing
   }
 
   Future<void> _fetchCategories() async {
@@ -83,7 +86,8 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     await FirebaseFirestore.instance.collection('paperFinishes').get();
     setState(() {
       _paperFinishes = querySnapshot.docs
-          .map((doc) => PaperFinish.fromMap(doc.data() as Map<String, dynamic>))
+          .map((doc) =>
+          PaperFinish.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
     });
   }
@@ -93,7 +97,18 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     await FirebaseFirestore.instance.collection('coverFinishes').get();
     setState(() {
       _coverFinishes = querySnapshot.docs
-          .map((doc) => CoverFinish.fromMap(doc.data() as Map<String, dynamic>))
+          .map((doc) =>
+          CoverFinish.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    });
+  }
+
+  Future<void> _fetchSizes() async {
+    QuerySnapshot querySnapshot =
+    await FirebaseFirestore.instance.collection('sizes').get();
+    setState(() {
+      _sizes = querySnapshot.docs
+          .map((doc) => Size.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
     });
   }
@@ -131,16 +146,26 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
                 },
               ),
               const SizedBox(height: 8.0),
-              FormBuilderTextField(
+
+              FormBuilderDropdown<Size>(
                 name: 'size',
-                decoration: const InputDecoration(labelText: 'Size'),
+                decoration: const InputDecoration(labelText: 'Select Size'),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null) {
                     return 'Please enter some text';
                   }
                   return null;
                 },
+                items: _sizes
+                    .map((size) => DropdownMenuItem(
+                  value: size,
+                  child: Text(size.name),
+                ))
+                    .toList(),
               ),
+
+
+
               const SizedBox(height: 8.0),
               FormBuilderTextField(
                 name: 'price',
@@ -163,8 +188,10 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
                   }
                   return null;
                 },
-                keyboardType: TextInputType.number,
+
               ),
+
+
               const SizedBox(height: 8.0),
               FormBuilderTextField(
                 name: 'printingTime',
@@ -222,6 +249,8 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
                   }
                   return null;
                 },
+
+
                 items: _types
                     .map((type) => DropdownMenuItem(
                   value: type,
@@ -289,10 +318,12 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
 
     final String title = formData?['title'] ?? '';
     final String description = formData?['description'] ?? '';
-    final String size = formData?['size'] ?? '';
-    final double price = double.tryParse(formData?['price'] ?? '') ?? 0;
-    final double miniature = double.tryParse(formData?['miniature'] ?? '') ?? 0;
-    final double printingTime = double.tryParse(formData?['printingTime'] ?? '') ?? 0;
+    final Size size = formData?['size'] ?? Size(name: '', dimensions: '');
+    final double price =
+        double.tryParse(formData?['price'] ?? '') ?? 0;
+    final String miniature = formData?['miniature'] ?? '';
+    final double printingTime =
+        double.tryParse(formData?['printingTime'] ?? '') ?? 0;
 
     final category = formData?['category'];
     final bookForm = formData?['bookForm'];
@@ -310,7 +341,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
       formBook: [bookForm],
       description: description,
       type: [bookType],
-      size: size,
+      size: [size],
       paperFinish: [paperFinish],
       coverFinish: [coverFinish],
       price: price,

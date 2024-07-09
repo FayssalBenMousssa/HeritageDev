@@ -41,7 +41,6 @@ class AddCategoryFormState extends State<AddCategoryForm> {
           child: Column(
             children: [
               if (_imagePreview != null) _buildImageThumbnail(),
-
               TextField(
                 onChanged: (value) {
                   setState(() {
@@ -131,11 +130,7 @@ class AddCategoryFormState extends State<AddCategoryForm> {
       return;
     }
 
-    Category newCategory = Category(
-      id: '',
-      categoryName: categoryName,
-      imageUrl: '',
-    );
+    String imageUrl = '';
 
     // Upload image to Firebase Storage
     if (_imageFile != null) {
@@ -144,9 +139,14 @@ class AddCategoryFormState extends State<AddCategoryForm> {
           .child('category_images')
           .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
       await ref.putFile(_imageFile!);
-      String imageUrl = await ref.getDownloadURL();
-      newCategory.imageUrl = imageUrl;
+      imageUrl = await ref.getDownloadURL();
     }
+
+    Category newCategory = Category(
+      id: '',
+      categoryName: categoryName,
+      imageUrl: imageUrl,
+    );
 
     Map<String, dynamic> categoryData = newCategory.toMap();
 
@@ -184,5 +184,3 @@ class AddCategoryFormState extends State<AddCategoryForm> {
     }
   }
 }
-
-
