@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:heritage/photo_book/models/book_type.dart'; // Updated import for BookType
+import 'package:heritage/photo_book/models/book_type.dart';
 import 'package:heritage/photo_book/models/photo_book.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/book_form.dart';
@@ -147,24 +147,22 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
               ),
               const SizedBox(height: 8.0),
 
-              FormBuilderDropdown<Size>(
+              FormBuilderCheckboxGroup<Size>(
                 name: 'size',
-                decoration: const InputDecoration(labelText: 'Select Size'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please enter some text';
+                decoration: const InputDecoration(labelText: 'Select Sizes'),
+                validator: (values) {
+                  if (values == null || values.isEmpty) {
+                    return 'Please select at least one size';
                   }
                   return null;
                 },
-                items: _sizes
-                    .map((size) => DropdownMenuItem(
+                options: _sizes
+                    .map((size) => FormBuilderFieldOption(
                   value: size,
                   child: Text(size.name),
                 ))
                     .toList(),
               ),
-
-
 
               const SizedBox(height: 8.0),
               FormBuilderTextField(
@@ -188,10 +186,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
                   }
                   return null;
                 },
-
               ),
-
-
               const SizedBox(height: 8.0),
               FormBuilderTextField(
                 name: 'printingTime',
@@ -205,95 +200,96 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 8.0),
-              FormBuilderDropdown<Category>(
+
+              FormBuilderCheckboxGroup<Category>(
                 name: 'category',
-                decoration: const InputDecoration(labelText: 'Select Category'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please enter some text';
+                decoration: const InputDecoration(labelText: 'Select Categories'),
+                validator: (values) {
+                  if (values == null || values.isEmpty) {
+                    return 'Please select at least one category';
                   }
                   return null;
                 },
-                items: _categories
-                    .map((category) => DropdownMenuItem(
+                options: _categories
+                    .map((category) => FormBuilderFieldOption(
                   value: category,
                   child: Text(category.categoryName),
                 ))
                     .toList(),
               ),
+
               const SizedBox(height: 8.0),
-              FormBuilderDropdown<BookForm>(
+              FormBuilderCheckboxGroup<BookForm>(
                 name: 'bookForm',
-                decoration:
-                const InputDecoration(labelText: 'Select Book Form'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please enter some text';
+                decoration: const InputDecoration(labelText: 'Select Book Forms'),
+                validator: (values) {
+                  if (values == null || values.isEmpty) {
+                    return 'Please select at least one book form';
                   }
                   return null;
                 },
-                items: _formsBook
-                    .map((formBook) => DropdownMenuItem(
+                options: _formsBook
+                    .map((formBook) => FormBuilderFieldOption(
                   value: formBook,
                   child: Text(formBook.name),
                 ))
                     .toList(),
               ),
+
               const SizedBox(height: 8.0),
-              FormBuilderDropdown<BookType>(
+              FormBuilderCheckboxGroup<BookType>(
                 name: 'bookType',
-                decoration: const InputDecoration(labelText: 'Select Type'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please enter some text';
+                decoration: const InputDecoration(labelText: 'Select Types'),
+                validator: (values) {
+                  if (values == null || values.isEmpty) {
+                    return 'Please select at least one type';
                   }
                   return null;
                 },
-
-
-                items: _types
-                    .map((type) => DropdownMenuItem(
+                options: _types
+                    .map((type) => FormBuilderFieldOption(
                   value: type,
                   child: Text(type.name),
                 ))
                     .toList(),
               ),
+
               const SizedBox(height: 8.0),
-              FormBuilderDropdown<PaperFinish>(
+              FormBuilderCheckboxGroup<PaperFinish>(
                 name: 'paperFinish',
-                decoration:
-                const InputDecoration(labelText: 'Select Paper Finish'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please enter some text';
+                decoration: const InputDecoration(labelText: 'Select Paper Finishes'),
+                validator: (values) {
+                  if (values == null || values.isEmpty) {
+                    return 'Please select at least one paper finish';
                   }
                   return null;
                 },
-                items: _paperFinishes
-                    .map((paperFinish) => DropdownMenuItem(
+                options: _paperFinishes
+                    .map((paperFinish) => FormBuilderFieldOption(
                   value: paperFinish,
                   child: Text(paperFinish.name),
                 ))
                     .toList(),
               ),
+
               const SizedBox(height: 8.0),
-              FormBuilderDropdown<CoverFinish>(
+              FormBuilderCheckboxGroup<CoverFinish>(
                 name: 'coverFinish',
-                decoration:
-                const InputDecoration(labelText: 'Select Cover Finish'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please enter some text';
+                decoration: const InputDecoration(labelText: 'Select Cover Finishes'),
+                validator: (values) {
+                  if (values == null || values.isEmpty) {
+                    return 'Please select at least one cover finish';
                   }
                   return null;
                 },
-                items: _coverFinishes
-                    .map((coverFinish) => DropdownMenuItem(
+                options: _coverFinishes
+                    .map((coverFinish) => FormBuilderFieldOption(
                   value: coverFinish,
                   child: Text(coverFinish.name),
                 ))
                     .toList(),
               ),
+
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
@@ -318,18 +314,18 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
 
     final String title = formData?['title'] ?? '';
     final String description = formData?['description'] ?? '';
-    final Size size = formData?['size'] ?? Size(name: '', dimensions: '');
+    final List<Size> selectedSizes = formData?['size'] ?? [];
     final double price =
         double.tryParse(formData?['price'] ?? '') ?? 0;
     final String miniature = formData?['miniature'] ?? '';
     final double printingTime =
         double.tryParse(formData?['printingTime'] ?? '') ?? 0;
 
-    final category = formData?['category'];
-    final bookForm = formData?['bookForm'];
-    final bookType = formData?['bookType'];
-    final paperFinish = formData?['paperFinish'];
-    final coverFinish = formData?['coverFinish'];
+    final List<Category> selectedCategories = formData?['category'] ?? [];
+    final List<BookForm> selectedBookForms = formData?['bookForm'] ?? [];
+    final List<BookType> selectedBookTypes = formData?['bookType'] ?? [];
+    final List<PaperFinish> selectedPaperFinishes = formData?['paperFinish'] ?? [];
+    final List<CoverFinish> selectedCoverFinishes = formData?['coverFinish'] ?? [];
 
     DocumentReference docRef =
     FirebaseFirestore.instance.collection('photoBooks').doc();
@@ -338,16 +334,16 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
       id: docRef.id,
       pages: [],
       title: title,
-      formBook: [bookForm],
+      formBook: selectedBookForms,
       description: description,
-      type: [bookType],
-      size: [size],
-      paperFinish: [paperFinish],
-      coverFinish: [coverFinish],
+      type: selectedBookTypes,
+      size: selectedSizes,
+      paperFinish: selectedPaperFinishes,
+      coverFinish: selectedCoverFinishes,
       price: price,
       miniature: miniature,
       printingTime: printingTime,
-      categories: [category],
+      categories: selectedCategories,
       coverImageUrl: '', // Set the cover image URL appropriately
     );
 

@@ -1,12 +1,15 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:heritage/photo_book/models/photo_book.dart';
-import 'package:heritage/photo_book/models/category.dart';
+import 'package:flutter/material.dart';
+import 'package:heritage/photo_book/Widget/checkbox_selection_list.dart';
 import 'package:heritage/photo_book/models/book_form.dart';
 import 'package:heritage/photo_book/models/book_type.dart';
+import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
+import 'package:heritage/photo_book/models/photo_book.dart';
 import 'package:heritage/photo_book/models/size.dart';
+
+
 
 class EditPhotoBookScreen extends StatefulWidget {
   final PhotoBook photoBook;
@@ -20,12 +23,12 @@ class EditPhotoBookScreen extends StatefulWidget {
 class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
   final _formKey = GlobalKey<FormState>();
   late String _title;
-  late Category _category;
-  late BookForm _bookForm;
-  late BookType _bookType;
-  late CoverFinish _coverFinish;
-  late PaperFinish _paperFinish;
-  late Size _size;
+  late List<Category> _selectedCategories;
+  late List<BookForm> _selectedBookForms;
+  late List<BookType> _selectedBookTypes;
+  late List<CoverFinish> _selectedCoverFinishes;
+  late List<PaperFinish> _selectedPaperFinishes;
+  late List<Size> _selectedSizes;
 
   List<Category> _categories = [];
   List<BookForm> _bookForms = [];
@@ -38,30 +41,12 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
   void initState() {
     super.initState();
     _title = widget.photoBook.title;
-
-    _category = widget.photoBook.categories.isNotEmpty
-        ? widget.photoBook.categories.first
-        : Category(id: '', categoryName: '', imageUrl: '');
-
-    _bookForm = widget.photoBook.formBook.isNotEmpty
-        ? widget.photoBook.formBook.first
-        : BookForm(id: '', name: '', description: '');
-
-    _bookType = widget.photoBook.type.isNotEmpty
-        ? widget.photoBook.type.first
-        : BookType(id: '', name: '', description: '');
-
-    _coverFinish = widget.photoBook.coverFinish.isNotEmpty
-        ? widget.photoBook.coverFinish.first
-        : CoverFinish(id: '', name: '', description: '');
-
-    _paperFinish = widget.photoBook.paperFinish.isNotEmpty
-        ? widget.photoBook.paperFinish.first
-        : PaperFinish(id: '', name: '', description: '');
-
-    _size = widget.photoBook.size.isNotEmpty
-        ? widget.photoBook.size.first
-        : Size(name: '', dimensions: '');
+    _selectedCategories = widget.photoBook.categories;
+    _selectedBookForms = widget.photoBook.formBook;
+    _selectedBookTypes = widget.photoBook.type;
+    _selectedCoverFinishes = widget.photoBook.coverFinish;
+    _selectedPaperFinishes = widget.photoBook.paperFinish;
+    _selectedSizes = widget.photoBook.size;
 
     _fetchDropdownData();
   }
@@ -82,20 +67,6 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
         _coverFinishes = coverFinishSnapshot.docs.map((doc) => CoverFinish.fromMap(doc.data())).toList();
         _paperFinishes = paperFinishSnapshot.docs.map((doc) => PaperFinish.fromMap(doc.data())).toList();
         _sizes = sizeSnapshot.docs.map((doc) => Size.fromMap(doc.data())).toList();
-
-        // Ensure that the dropdown values match the items list
-        _category = _categories.firstWhere((cat) => cat.id == _category.id,
-            orElse: () => _categories.isNotEmpty ? _categories.first : Category(id: '', categoryName: '', imageUrl: ''));
-        _bookForm = _bookForms.firstWhere((form) => form.id == _bookForm.id,
-            orElse: () => _bookForms.isNotEmpty ? _bookForms.first : BookForm(id: '', name: '', description: ''));
-        _bookType = _bookTypes.firstWhere((type) => type.id == _bookType.id,
-            orElse: () => _bookTypes.isNotEmpty ? _bookTypes.first : BookType(id: '', name: '', description: ''));
-        _coverFinish = _coverFinishes.firstWhere((cover) => cover.id == _coverFinish.id,
-            orElse: () => _coverFinishes.isNotEmpty ? _coverFinishes.first : CoverFinish(id: '', name: '', description: ''));
-        _paperFinish = _paperFinishes.firstWhere((paper) => paper.id == _paperFinish.id,
-            orElse: () => _paperFinishes.isNotEmpty ? _paperFinishes.first : PaperFinish(id: '', name: '', description: ''));
-        _size = _sizes.firstWhere((size) => size.name == _size.name,
-            orElse: () => _sizes.isNotEmpty ? _sizes.first : Size(name: '', dimensions: ''));
       });
     } catch (e) {
       print('Error fetching dropdown data: $e');
@@ -105,45 +76,56 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
     }
   }
 
+  Future<void> _showCheckboxDialog<T>({
+    required List<T> items,
+    required List<T> selectedItems,
+    required String title,
+    required String Function(T) itemLabel,
+    required ValueChanged<List<T>> onSelectionChanged,
+  }) async {
+    final result = await showDialog<List<T>>(
+      context: context,
+      builder: (context) {
+        return CheckboxListDialog<T>(
+          items: items,
+          selectedItems: selectedItems,
+          title: title,
+          itemLabel: itemLabel,
+        );
+      },
+    );
+    if (result != null) {
+      onSelectionChanged(result);
+    }
+  }
+
   void _updatePhotoBook() {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
 
       // Debug prints to verify form data
       print('Form data - Title: $_title');
-      print('Form data - Category: ${_category.toMap()}');
-      print('Form data - BookForm: ${_bookForm.toMap()}');
-      print('Form data - BookType: ${_bookType.toMap()}');
-      print('Form data - CoverFinish: ${_coverFinish.toMap()}');
-      print('Form data - PaperFinish: ${_paperFinish.toMap()}');
-      print('Form data - Size: ${_size.toMap()}');
+      print('Form data - Categories: ${_selectedCategories.map((cat) => cat.toMap()).toList()}');
+      print('Form data - BookForms: ${_selectedBookForms.map((form) => form.toMap()).toList()}');
+      print('Form data - BookTypes: ${_selectedBookTypes.map((type) => type.toMap()).toList()}');
+      print('Form data - CoverFinishes: ${_selectedCoverFinishes.map((cover) => cover.toMap()).toList()}');
+      print('Form data - PaperFinishes: ${_selectedPaperFinishes.map((paper) => paper.toMap()).toList()}');
+      print('Form data - Sizes: ${_selectedSizes.map((size) => size.toMap()).toList()}');
+      print('Form data - PhotoBook ID: ${widget.photoBook.id}');
 
       FirebaseFirestore.instance
           .collection('photoBooks')
           .doc(widget.photoBook.id)
           .update({
         'title': _title,
-        'category': _category.toMap(),
-        'bookForm': _bookForm.toMap(),
-        'bookType': _bookType.toMap(),
-        'coverFinish': _coverFinish.toMap(),
-        'paperFinish': _paperFinish.toMap(),
-        'size': _size.toMap(),
+        'categories': _selectedCategories.map((cat) => cat.toMap()).toList(),
+        'formBook': _selectedBookForms.map((form) => form.toMap()).toList(),
+        'type': _selectedBookTypes.map((type) => type.toMap()).toList(),
+        'coverFinish': _selectedCoverFinishes.map((cover) => cover.toMap()).toList(),
+        'paperFinish': _selectedPaperFinishes.map((paper) => paper.toMap()).toList(),
+        'size': _selectedSizes.map((size) => size.toMap()).toList(),
       }).then((_) {
-        // Confirming data was updated
-        FirebaseFirestore.instance
-            .collection('photoBooks')
-            .doc(widget.photoBook.id)
-            .get()
-            .then((doc) {
-          print('Updated Document: ${doc.data()}');
-          Navigator.pop(context);
-        }).catchError((error) {
-          print('Failed to fetch updated document: $error');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to fetch updated document: $error')),
-          );
-        });
+        Navigator.pop(context);
       }).catchError((error) {
         print('Failed to update photo book: $error');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -166,6 +148,7 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
                 initialValue: _title,
@@ -178,101 +161,71 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
                 },
                 onSaved: (value) => _title = value ?? '',
               ),
-              DropdownButtonFormField<Category>(
-                value: _category,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: _categories.map((Category category) {
-                  return DropdownMenuItem<Category>(
-                    value: category,
-                    child: Text(category.categoryName),
-                  );
-                }).toList(),
-                onChanged: (value) {
+              _buildCheckboxButton(
+                title: 'Category',
+                selectedItems: _selectedCategories,
+                items: _categories,
+                itemLabel: (item) => item.categoryName,
+                onSelectionChanged: (selectedItems) {
                   setState(() {
-                    _category = value!;
+                    _selectedCategories = selectedItems;
                   });
                 },
-                onSaved: (value) => _category = value!,
               ),
-              DropdownButtonFormField<BookForm>(
-                value: _bookForm,
-                decoration: const InputDecoration(labelText: 'Book Form'),
-                items: _bookForms.map((BookForm bookForm) {
-                  return DropdownMenuItem<BookForm>(
-                    value: bookForm,
-                    child: Text(bookForm.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
+              _buildCheckboxButton(
+                title: 'Book Form',
+                selectedItems: _selectedBookForms,
+                items: _bookForms,
+                itemLabel: (item) => item.name,
+                onSelectionChanged: (selectedItems) {
                   setState(() {
-                    _bookForm = value!;
+                    _selectedBookForms = selectedItems;
                   });
                 },
-                onSaved: (value) => _bookForm = value!,
               ),
-              DropdownButtonFormField<BookType>(
-                value: _bookType,
-                decoration: const InputDecoration(labelText: 'Book Type'),
-                items: _bookTypes.map((BookType bookType) {
-                  return DropdownMenuItem<BookType>(
-                    value: bookType,
-                    child: Text(bookType.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
+              _buildCheckboxButton(
+                title: 'Book Type',
+                selectedItems: _selectedBookTypes,
+                items: _bookTypes,
+                itemLabel: (item) => item.name,
+                onSelectionChanged: (selectedItems) {
                   setState(() {
-                    _bookType = value!;
+                    _selectedBookTypes = selectedItems;
                   });
                 },
-                onSaved: (value) => _bookType = value!,
               ),
-              DropdownButtonFormField<CoverFinish>(
-                value: _coverFinish,
-                decoration: const InputDecoration(labelText: 'Cover Finish'),
-                items: _coverFinishes.map((CoverFinish coverFinish) {
-                  return DropdownMenuItem<CoverFinish>(
-                    value: coverFinish,
-                    child: Text(coverFinish.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
+              _buildCheckboxButton(
+                title: 'Cover Finish',
+                selectedItems: _selectedCoverFinishes,
+                items: _coverFinishes,
+                itemLabel: (item) => item.name,
+                onSelectionChanged: (selectedItems) {
                   setState(() {
-                    _coverFinish = value!;
+                    _selectedCoverFinishes = selectedItems;
                   });
                 },
-                onSaved: (value) => _coverFinish = value!,
               ),
-              DropdownButtonFormField<PaperFinish>(
-                value: _paperFinish,
-                decoration: const InputDecoration(labelText: 'Paper Finish'),
-                items: _paperFinishes.map((PaperFinish paperFinish) {
-                  return DropdownMenuItem<PaperFinish>(
-                    value: paperFinish,
-                    child: Text(paperFinish.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
+              _buildCheckboxButton(
+                title: 'Paper Finish',
+                selectedItems: _selectedPaperFinishes,
+                items: _paperFinishes,
+                itemLabel: (item) => item.name,
+                onSelectionChanged: (selectedItems) {
                   setState(() {
-                    _paperFinish = value!;
+                    _selectedPaperFinishes = selectedItems;
                   });
                 },
-                onSaved: (value) => _paperFinish = value!,
               ),
-              DropdownButtonFormField<Size>(
-                value: _size,
-                decoration: const InputDecoration(labelText: 'Size'),
-                items: _sizes.map((Size size) {
-                  return DropdownMenuItem<Size>(
-                    value: size,
-                    child: Text(size.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
+              _buildCheckboxButton(
+                title: 'Size',
+                selectedItems: _selectedSizes,
+                items: _sizes,
+                itemLabel: (item) => item.name,
+                onSelectionChanged: (selectedItems) {
                   setState(() {
-                    _size = value!;
+                    _selectedSizes = selectedItems;
                   });
                 },
-                onSaved: (value) => _size = value!,
               ),
               const SizedBox(height: 20),
               ElevatedButton(
@@ -283,6 +236,28 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCheckboxButton<T>({
+    required String title,
+    required List<T> selectedItems,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required ValueChanged<List<T>> onSelectionChanged,
+  }) {
+    return ListTile(
+      title: Text(title),
+      trailing: const Icon(Icons.arrow_forward),
+      onTap: () {
+        _showCheckboxDialog<T>(
+          items: items,
+          selectedItems: selectedItems,
+          title: title,
+          itemLabel: itemLabel,
+          onSelectionChanged: onSelectionChanged,
+        );
+      },
     );
   }
 }

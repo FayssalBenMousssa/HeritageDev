@@ -87,14 +87,14 @@ class HomeScreen extends StatelessWidget {
             itemCount: categories.length,
             itemBuilder: (context, index) {
               Category category = categories[index];
-              return _buildCategoryListItem(category);
+              return _buildCategoryListItem(context, category);
             },
           ),
         );
       },
     );
   }
-  Widget _buildCategoryListItem(Category category) {
+  Widget _buildCategoryListItem(BuildContext context,Category category) {
     return Container(
       width: 100,
       margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -134,8 +134,13 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  // Handle button press
+                  Navigator.pushNamed(
+                    context,
+                    '/photo_book_client',
+                    arguments: {'category': category}, // Example argument
+                  );
                 },
+
                 child: Text(
                   category.categoryName,
                   style: const TextStyle(color: Colors.black, fontSize: 10),

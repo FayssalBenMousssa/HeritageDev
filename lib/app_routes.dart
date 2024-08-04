@@ -6,7 +6,10 @@ import 'package:heritage/authentication/screens/registration_screen.dart';
 import 'package:heritage/authentication/screens/profile_screen.dart';
 import 'package:heritage/authentication/screens/edit_profile_screen.dart';
 import 'package:heritage/photo_book/screens/category_screen.dart';
-import 'package:heritage/photo_book/screens/photo_book_screen.dart'; // Import the PhotoBookScreen
+import 'package:heritage/photo_book/screens/photo_book_screen.dart';
+import 'package:heritage/photo_book/screens/photo_book_client_screen.dart';
+
+
 
 class AppRoutes {
   static final routes = <String, WidgetBuilder>{
@@ -19,7 +22,8 @@ class AppRoutes {
       return EditProfileScreen(user: user);
     },
     '/category': (context) => const CategoryScreen(),
-    '/photo_book': (context) => const PhotoBookScreen(), // Add route for PhotoBookScreen
+    '/photo_book': (context) => const PhotoBookScreen(),
+    '/photo_book_client': (context) => const PhotoBookClientScreen(),
     // Add more routes as needed
   };
 }

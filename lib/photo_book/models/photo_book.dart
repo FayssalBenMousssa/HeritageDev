@@ -1,8 +1,8 @@
-import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/book_form.dart';
 import 'package:heritage/photo_book/models/book_type.dart';
-import 'package:heritage/photo_book/models/paper_finish.dart';
+import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
+import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
 class PhotoBook {

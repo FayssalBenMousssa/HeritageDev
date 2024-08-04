@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/photo_book.dart';
 import 'package:heritage/photo_book/screens/add_photo_book_screen.dart';
-import 'package:heritage/photo_book/screens/photo_book_detail_screen.dart';
 import 'package:heritage/photo_book/screens/edit_photo_book_screen.dart'; // Import EditPhotoBookScreen
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:heritage/photo_book/screens/photo_book_detail_screen.dart';
 
 class PhotoBookScreen extends StatefulWidget {
   const PhotoBookScreen({Key? key}) : super(key: key);
@@ -21,6 +22,9 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+     log(arguments.toString()) ;
+    log('--------------------') ;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Photo Books'),
@@ -110,6 +114,12 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
               Expanded(
                 child: Text(photoBook.title),
               ),
+              Expanded(
+                child: Text(
+                  photoBook.size.isNotEmpty ? photoBook.size[0].name ?? 'Default Name' : 'List is empty',
+                ),
+              ),
+
               SizedBox(width: 16.0),
               IconButton(
                 icon: const Icon(Icons.edit),

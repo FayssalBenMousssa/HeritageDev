@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/category.dart'; // Adjust paths as per your project structure
 import 'package:heritage/photo_book/screens/add_category_screen.dart'; // Assuming you have these screens
 import 'package:heritage/photo_book/screens/edit_category_screen.dart'; // Assuming you have these screens
