@@ -1,7 +1,5 @@
 # heritage
 
-Application mobile permettant aux utilisateurs de créer facilement des photobooks
-
 ## Getting Started
 
 This project is a starting point for a Flutter application.

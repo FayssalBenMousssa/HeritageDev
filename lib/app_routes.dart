@@ -5,6 +5,7 @@ import 'package:heritage/home_screen.dart';
 import 'package:heritage/authentication/screens/registration_screen.dart';
 import 'package:heritage/authentication/screens/profile_screen.dart';
 import 'package:heritage/authentication/screens/edit_profile_screen.dart';
+import 'package:heritage/photo_book/screens/add_price_screen.dart';
 import 'package:heritage/photo_book/screens/category_screen.dart';
 import 'package:heritage/photo_book/screens/photo_book_screen.dart';
 import 'package:heritage/photo_book/screens/photo_book_client_screen.dart';
@@ -24,6 +25,7 @@ class AppRoutes {
     '/category': (context) => const CategoryScreen(),
     '/photo_book': (context) => const PhotoBookScreen(),
     '/photo_book_client': (context) => const PhotoBookClientScreen(),
+    '/price_add': (context) => const AddPriceScreen(),
     // Add more routes as needed
   };
 }

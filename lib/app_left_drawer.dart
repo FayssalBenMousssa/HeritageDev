@@ -52,6 +52,12 @@ class AppLeftDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/photo_book');
             },
           ),
+          ListTile(
+            title: const Text('Price Add '), // Add menu item for Photo Books
+            onTap: () {
+              Navigator.pushNamed(context, '/price_add');
+            },
+          ),
           const Divider(),
           ListTile(
             title: const Text('Logout'),

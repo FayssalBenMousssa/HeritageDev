@@ -11,6 +11,9 @@ class Size {
     return {
       'name': name,
       'dimensions': dimensions,
+
+
+
     };
   }
 
