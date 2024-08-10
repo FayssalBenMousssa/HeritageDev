@@ -84,67 +84,144 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
   }
 
   Widget _buildPhotoBookGridItem(PhotoBook photoBook) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(2.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
-              child: photoBook.coverImageUrl.isNotEmpty
-                  ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    photoBook.coverImageUrl,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;
-                      } else {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                                : null,
-                          ),
+    return GestureDetector(
+      onTap: () => _showPhotoBookDialog(photoBook),
+      child: Card(
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(2.0),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
+                child: photoBook.coverImageUrl.isNotEmpty
+                    ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      photoBook.coverImageUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child;
+                        } else {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+                                  : null,
+                            ),
+                          );
+                        }
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(Icons.error, color: Colors.red),
                         );
-                      }
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.error, color: Colors.red),
-                      );
-                    },
-                  ),
-                  // Optionally, you can add an overlay or additional UI here
-                ],
-              )
-                  : Container(
-                color: Colors.grey,
-                child: const Center(
-                  child: Text(
-                    'No Image',
-                    style: TextStyle(color: Colors.white),
+                      },
+                    ),
+                    // Optionally, you can add an overlay or additional UI here
+                  ],
+                )
+                    : Container(
+                  color: Colors.grey,
+                  child: const Center(
+                    child: Text(
+                      'No Image',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              photoBook.title,
-              style: TextStyle(fontWeight: FontWeight.bold),
-              overflow: TextOverflow.ellipsis,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                photoBook.title,
+                style: TextStyle(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  void _showPhotoBookDialog(PhotoBook photoBook) {
+    // Define a list of random image URLs
+    final List<String> randomImageUrls = [
+      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',
+      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700',
+      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-3-FR.jpg?d=700x700',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: EdgeInsets.all(5), // Remove default padding
+          child: Container(
+            width: 400, // Width of the dialog
+            height: 400, // Height of the dialog
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: PageView(
+                    children: randomImageUrls.map((url) {
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                              if (loadingProgress == null) {
+                                return child;
+                              } else {
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+                                        : null,
+                                  ),
+                                );
+                              }
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(Icons.error, color: Colors.red),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0), // Adjust padding around the text
+                  child: Text(
+                    photoBook.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
+
 }

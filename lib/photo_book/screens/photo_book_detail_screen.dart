@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:image_picker/image_picker.dart';
-import 'package:heritage/photo_book/models/photo_book.dart';
-import 'package:page_flip/page_flip.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:page_flip/page_flip.dart';
+
+import '../models/photo_book.dart';
 
 class PhotoBookDetailScreen extends StatefulWidget {
   final PhotoBook photoBook;
@@ -18,16 +19,24 @@ class PhotoBookDetailScreen extends StatefulWidget {
   _PhotoBookDetailScreenState createState() => _PhotoBookDetailScreenState();
 }
 
-class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> {
+class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with SingleTickerProviderStateMixin {
   final _controller = GlobalKey<PageFlipWidgetState>();
   File? _imageFile;
   Widget? _imagePreview;
   bool _isUploading = false; // Track the upload state
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _loadInitialImage();
+    _tabController = TabController(length: 7, vsync: this); // Updated to 7 for new tab
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   void _loadInitialImage() {
@@ -92,82 +101,86 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> {
     }
   }
 
-  Widget _buildCoverImagePage() {
-    return SizedBox.expand(
-      child: _imagePreview,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.photoBook.title),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: true, // Allow horizontal scrolling
+            tabs: const [
+              Tab(text: 'Cover Image'),
+              Tab(text: 'Description'),
+              Tab(text: 'Size'),
+              Tab(text: 'Price'),
+              Tab(text: 'Miniature'),
+              Tab(text: 'Printing Time'),
+              Tab(text: 'Flip Book'),
+            ],
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_imagePreview != null) _buildImageThumbnail(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.photoBook.title,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Description: ${widget.photoBook.description}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Size: ${widget.photoBook.size}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Price: \$${widget.photoBook.price.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Miniature: ${widget.photoBook.miniature}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Printing Time: ${widget.photoBook.printingTime} days',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 16), // Add spacing between Printing Time and button
-                ],
-              ),
-            ),
-            Container(
-              height: 300,
-              margin: const EdgeInsets.all(15.0),
-              padding: const EdgeInsets.all(3.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blueAccent),
-              ),
-              child: PageFlipWidget(
-                key: _controller,
-                backgroundColor: Colors.white,
-                lastPage: Container(
-                  color: Colors.white,
-                  child: const Center(child: Text('Last Page!')),
-                ),
-                children: <Widget>[
-                  _buildCoverImagePage(),
-                  for (var i = 0; i < 10; i++) DemoPage(page: i),
-                ],
-              ),
-            ),
-          ],
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildCoverImageTab(),
+          _buildDetailTab('Description: ${widget.photoBook.description}'),
+          _buildDetailTab('Size: ${widget.photoBook.size}'),
+          _buildDetailTab('Price: \$${widget.photoBook.price.toStringAsFixed(2)}'),
+          _buildDetailTab('Miniature: ${widget.photoBook.miniature}'),
+          _buildDetailTab('Printing Time: ${widget.photoBook.printingTime} days'),
+          _buildFlipBookTab(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoverImageTab() {
+    return Column(
+      children: [
+        Expanded(
+          child: Center(child: _imagePreview ?? const SizedBox.shrink()),
+        ),
+        if (_imagePreview != null) _buildImageThumbnail(),
+      ],
+    );
+  }
+
+  Widget _buildDetailTab(String detail) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(
+          detail,
+          style: const TextStyle(fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlipBookTab() {
+    return Container(
+      margin: const EdgeInsets.all(15.0),
+      padding: const EdgeInsets.all(3.0),
+
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.blueAccent),
+      ),
+      child: PageFlipWidget(
+        key: _controller,
+        backgroundColor: Colors.white,
+        lastPage: Container(
+          color: Colors.white,
+          child: const Center(child: Text('Last Page!')),
+        ),
+
+        children: List.generate(
+          10,
+              (index) => DemoPage(page: index),
         ),
       ),
     );
