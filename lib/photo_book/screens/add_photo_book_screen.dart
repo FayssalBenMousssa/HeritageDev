@@ -1,3 +1,7 @@
+
+
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -110,6 +114,10 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
       _sizes = querySnapshot.docs
           .map((doc) => Size.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
+
+      log("----------size----------");
+      log(_sizes.length.toString());
+      log("------------------------");
     });
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:heritage/photo_book/models/size.dart';
+import 'package:heritage/photo_book/models/cover_finish.dart';
 import 'package:heritage/photo_book/models/price.dart';
 
 class AddPriceScreen extends StatelessWidget {
@@ -28,11 +29,11 @@ class AddPriceFormState extends State<AddPriceForm> {
   final _formKey = GlobalKey<FormState>();
   int? id;
   Size? selectedSize;
-  DateTime? datestart;
+  CoverFinish? selectedCoverFinish;
+  DateTime? dateStart;
   DateTime? dateEnd;
-  double coverPrice = 0.0;
   double pagePrice = 0.0;
-  double basePrice = 0.0;
+  double value = 0.0;
 
   // Method to handle date selection
   Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
@@ -45,7 +46,7 @@ class AddPriceFormState extends State<AddPriceForm> {
     if (picked != null) {
       setState(() {
         if (isStartDate) {
-          datestart = picked;
+          dateStart = picked;
         } else {
           dateEnd = picked;
         }
@@ -60,20 +61,16 @@ class AddPriceFormState extends State<AddPriceForm> {
       Price newPrice = Price(
         id: id!,
         size: selectedSize!,
-        datestart: datestart,
+        coverFinish: selectedCoverFinish!,
+        dateStart: dateStart,
         dateEnd: dateEnd,
-        coverPrice: coverPrice,
         pagePrice: pagePrice,
-        basePrice: basePrice,
+        value: value,
       );
 
       Map<String, dynamic> priceData = newPrice.toMap();
 
       FirebaseFirestore.instance.collection('prices').add(priceData).then((docRef) {
-        // Update the ID of the newly added price
-        String priceId = docRef.id;
-        FirebaseFirestore.instance.collection('prices').doc(priceId).update({'id': priceId});
-
         // Show Snackbar
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Price added'))
@@ -123,14 +120,30 @@ class AddPriceFormState extends State<AddPriceForm> {
                   return null;
                 },
               ),
+              DropdownButtonFormField<CoverFinish>(
+                decoration: const InputDecoration(labelText: 'Cover Finish'),
+                value: selectedCoverFinish,
+                onChanged: (value) {
+                  setState(() {
+                    selectedCoverFinish = value;
+                  });
+                },
+                items: _buildCoverFinishDropdownItems(),
+                validator: (value) {
+                  if (value == null) {
+                    return 'Cover Finish is required';
+                  }
+                  return null;
+                },
+              ),
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
                       decoration: InputDecoration(
-                        labelText: datestart == null
+                        labelText: dateStart == null
                             ? 'Select Start Date'
-                            : 'Start Date: ${datestart!.toLocal()}'.split(' ')[0],
+                            : 'Start Date: ${dateStart!.toLocal()}'.split(' ')[0],
                       ),
                       readOnly: true,
                       onTap: () => _selectDate(context, isStartDate: true),
@@ -151,19 +164,6 @@ class AddPriceFormState extends State<AddPriceForm> {
                 ],
               ),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Cover Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Cover Price is required';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  coverPrice = double.tryParse(value!)!;
-                },
-              ),
-              TextFormField(
                 decoration: const InputDecoration(labelText: 'Page Price'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -176,19 +176,21 @@ class AddPriceFormState extends State<AddPriceForm> {
                   pagePrice = double.tryParse(value!)!;
                 },
               ),
+
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Base Price'),
+                decoration: const InputDecoration(labelText: 'Value'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Base Price is required';
+                    return 'Value is required';
                   }
                   return null;
                 },
                 onSaved: (value) {
-                  basePrice = double.tryParse(value!)!;
+                  this.value = double.tryParse(value!)!;
                 },
               ),
+
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => _addPrice(context),
@@ -213,6 +215,21 @@ class AddPriceFormState extends State<AddPriceForm> {
       return DropdownMenuItem<Size>(
         value: size,
         child: Text(size.name),
+      );
+    }).toList();
+  }
+
+  List<DropdownMenuItem<CoverFinish>> _buildCoverFinishDropdownItems() {
+    // Populate this list with your actual CoverFinish objects.
+    List<CoverFinish> coverFinishes = [
+      CoverFinish(id : '1',name: 'Matte' ,description : 'discrip'),
+      CoverFinish(id : '2',name:'Glossy', description : 'discrip' ),
+    ];
+
+    return coverFinishes.map((finish) {
+      return DropdownMenuItem<CoverFinish>(
+        value: finish,
+        child: Text(finish.name),
       );
     }).toList();
   }
