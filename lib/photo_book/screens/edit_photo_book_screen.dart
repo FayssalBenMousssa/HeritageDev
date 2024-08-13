@@ -103,15 +103,6 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
 
-      // Debug prints to verify form data
-      print('Form data - Title: $_title');
-      print('Form data - Categories: ${_selectedCategories.map((cat) => cat.toMap()).toList()}');
-      print('Form data - BookForms: ${_selectedBookForms.map((form) => form.toMap()).toList()}');
-      print('Form data - BookTypes: ${_selectedBookTypes.map((type) => type.toMap()).toList()}');
-      print('Form data - CoverFinishes: ${_selectedCoverFinishes.map((cover) => cover.toMap()).toList()}');
-      print('Form data - PaperFinishes: ${_selectedPaperFinishes.map((paper) => paper.toMap()).toList()}');
-      print('Form data - Sizes: ${_selectedSizes.map((size) => size.toMap()).toList()}');
-      print('Form data - PhotoBook ID: ${widget.photoBook.id}');
 
       FirebaseFirestore.instance
           .collection('photoBooks')

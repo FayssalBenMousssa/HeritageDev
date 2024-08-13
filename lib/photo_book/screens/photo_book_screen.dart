@@ -53,7 +53,7 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
           try {
             _photoBooks = snapshot.data!.docs
                 .map((doc) {
-              print('Document data: ${doc.data()}'); // Log document data
+
               return PhotoBook.fromMap(doc.data() as Map<String, dynamic>);
             })
                 .toList();

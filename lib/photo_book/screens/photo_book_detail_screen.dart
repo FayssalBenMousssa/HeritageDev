@@ -13,13 +13,15 @@ import '../Widget/demo_page.dart';
 class PhotoBookDetailScreen extends StatefulWidget {
   final PhotoBook photoBook;
 
-  const PhotoBookDetailScreen({Key? key, required this.photoBook}) : super(key: key);
+  const PhotoBookDetailScreen({Key? key, required this.photoBook})
+      : super(key: key);
 
   @override
   _PhotoBookDetailScreenState createState() => _PhotoBookDetailScreenState();
 }
 
-class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with SingleTickerProviderStateMixin {
+class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
+    with SingleTickerProviderStateMixin {
   final _controller = GlobalKey<PageFlipWidgetState>();
   File? _imageFile;
   Widget? _imagePreview;
@@ -28,8 +30,11 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
 
   DateTime? dateStart;
   DateTime? dateEnd;
+  TextEditingController _startDateController = TextEditingController();
+  TextEditingController _endDateController = TextEditingController();
 
-  Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
+  Future<void> _selectDate(BuildContext context,
+      {required bool isStartDate}) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -40,8 +45,10 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
       setState(() {
         if (isStartDate) {
           dateStart = picked;
+          _startDateController.text = '${dateStart!.toLocal()}'.split(' ')[0];
         } else {
           dateEnd = picked;
+          _endDateController.text = '${dateEnd!.toLocal()}'.split(' ')[0];
         }
       });
     }
@@ -51,11 +58,14 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
   void initState() {
     super.initState();
     _loadInitialImage();
-    _tabController = TabController(length: 8, vsync: this); // Updated to 8 for new tab
+    _tabController =
+        TabController(length: 8, vsync: this); // Updated to 8 for new tab
   }
 
   @override
   void dispose() {
+    _startDateController.dispose();
+    _endDateController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -64,11 +74,12 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
     setState(() {
       _imagePreview = widget.photoBook.coverImageUrl.isNotEmpty
           ? CachedNetworkImage(
-        imageUrl: widget.photoBook.coverImageUrl,
-        placeholder: (context, url) => const CircularProgressIndicator(),
-        errorWidget: (context, url, error) => const Icon(Icons.error),
-      )
-          : Image.asset('assets/logo.png'); // Replace with your default image asset path
+              imageUrl: widget.photoBook.coverImageUrl,
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
+            )
+          : Image.asset(
+              'assets/logo.png'); // Replace with your default image asset path
     });
   }
 
@@ -85,7 +96,8 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
       });
 
       if (_imageFile != null) {
-        firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
+        firebase_storage.Reference ref = firebase_storage
+            .FirebaseStorage.instance
             .ref()
             .child('photobook_cover_images')
             .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
@@ -153,7 +165,8 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
           _buildDetailTab('Description: ${widget.photoBook.description}'),
           _buildDetailTab('Size: ${widget.photoBook.size}'),
           _buildDetailTab('Miniature: ${widget.photoBook.miniature}'),
-          _buildDetailTab('Printing Time: ${widget.photoBook.printingTime} days'),
+          _buildDetailTab(
+              'Printing Time: ${widget.photoBook.printingTime} days'),
           _buildFlipBookTab(),
           _buildCoverFinishTab(), // New tab view for Cover Finish
         ],
@@ -175,70 +188,67 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
   Widget _buildPriceTab() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView( // Add SingleChildScrollView here
+      child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Original Value TextFormField with border
+            // Grouped Value and Date Pickers inside the same border
             Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(8.0),
               ),
               padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Value',
-                  border: InputBorder.none, // Remove internal border
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Value is required';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  // Save the value here
-                },
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Date pickers for start and end dates with border
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        labelText: dateStart == null
-                            ? 'Select Start Date'
-                            : 'Start Date: ${dateStart!.toLocal()}'.split(' ')[0],
-                        border: InputBorder.none, // Remove internal border
-                      ),
-                      readOnly: true,
-                      onTap: () => _selectDate(context, isStartDate: true),
+                  // Original Value TextFormField
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Value',
+                      border: InputBorder.none,
                     ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Value is required';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
+                      // Save the value here
+                    },
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        labelText: dateEnd == null
-                            ? 'Select End Date'
-                            : 'End Date: ${dateEnd!.toLocal()}'.split(' ')[0],
-                        border: InputBorder.none, // Remove internal border
+                  const SizedBox(height: 20),
+
+                  // Date pickers for start and end dates
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller:
+                              _startDateController, // Add controller here
+                          decoration: const InputDecoration(
+                            labelText: 'Select Start Date',
+                            border: InputBorder.none,
+                          ),
+                          readOnly: true,
+                          onTap: () => _selectDate(context, isStartDate: true),
+                        ),
                       ),
-                      readOnly: true,
-                      onTap: () => _selectDate(context, isStartDate: false),
-                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _endDateController, // Add controller here
+                          decoration: const InputDecoration(
+                            labelText: 'Select End Date',
+                            border: InputBorder.none,
+                          ),
+                          readOnly: true,
+                          onTap: () => _selectDate(context, isStartDate: false),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -282,7 +292,8 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
                           TextFormField(
                             decoration: InputDecoration(
                               labelText: 'Cover value for ${coverFinish.name}',
-                              border: const OutlineInputBorder(), // Add border for better design
+                              border:
+                                  const OutlineInputBorder(), // Add border for better design
                             ),
                             keyboardType: TextInputType.number,
                             validator: (value) {
@@ -305,7 +316,8 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
                     TextFormField(
                       decoration: InputDecoration(
                         labelText: 'Price for size $size',
-                        border: const OutlineInputBorder(), // Add border for better design
+                        border:
+                            const OutlineInputBorder(), // Add border for better design
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -322,7 +334,8 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
                     TextFormField(
                       decoration: InputDecoration(
                         labelText: 'Page value for size $size',
-                        border: const OutlineInputBorder(), // Add border for better design
+                        border:
+                            const OutlineInputBorder(), // Add border for better design
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -353,9 +366,6 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
     );
   }
 
-
-
-
   Widget _buildDetailTab(String content) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -382,7 +392,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
         ),
         children: List.generate(
           10,
-              (index) => DemoPage(page: index),
+          (index) => DemoPage(page: index),
         ),
       ),
     );
