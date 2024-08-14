@@ -79,9 +79,9 @@ class PhotoBook {
         coverFinish: map['coverFinish'] != null && map['coverFinish'] is List
             ? List<CoverFinish>.from((map['coverFinish'] as List).map((cfMap) => CoverFinish.fromMap(cfMap)))
             : [],
-        price: map['price'] ?? 0.0,
-        miniature: map['miniature'] ?? 0.0,
-        printingTime: map['printingTime'] ?? 0.0,
+        price: map['price'] is num ? (map['price'] as num).toDouble() : 0.0, // Handle conversion to double
+        miniature: map['miniature'] ?? '', // Handle as String
+        printingTime: map['printingTime'] is num ? (map['printingTime'] as num).toDouble() : 0.0, // Handle conversion to double
         categories: map['categories'] != null && map['categories'] is List
             ? List<Category>.from((map['categories'] as List).map((categoryMap) => Category.fromMap(categoryMap)))
             : [],

@@ -13,15 +13,13 @@ import '../Widget/demo_page.dart';
 class PhotoBookDetailScreen extends StatefulWidget {
   final PhotoBook photoBook;
 
-  const PhotoBookDetailScreen({Key? key, required this.photoBook})
-      : super(key: key);
+  const PhotoBookDetailScreen({Key? key, required this.photoBook}) : super(key: key);
 
   @override
   _PhotoBookDetailScreenState createState() => _PhotoBookDetailScreenState();
 }
 
-class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
-    with SingleTickerProviderStateMixin {
+class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with SingleTickerProviderStateMixin {
   final _controller = GlobalKey<PageFlipWidgetState>();
   File? _imageFile;
   Widget? _imagePreview;
@@ -30,43 +28,40 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
 
   DateTime? dateStart;
   DateTime? dateEnd;
-  TextEditingController _startDateController = TextEditingController();
-  TextEditingController _endDateController = TextEditingController();
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
+  final TextEditingController _valueController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  Future<void> _selectDate(BuildContext context,
-      {required bool isStartDate}) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          dateStart = picked;
-          _startDateController.text = '${dateStart!.toLocal()}'.split(' ')[0];
-        } else {
-          dateEnd = picked;
-          _endDateController.text = '${dateEnd!.toLocal()}'.split(' ')[0];
-        }
-      });
-    }
-  }
+  final Map<String, TextEditingController> _sizeControllers = {};
+  final Map<String, Map<String, TextEditingController>> _coverControllers = {};
 
   @override
   void initState() {
     super.initState();
     _loadInitialImage();
-    _tabController =
-        TabController(length: 8, vsync: this); // Updated to 8 for new tab
+    _tabController = TabController(length: 8, vsync: this);
+
+    // Initialize controllers for sizes and covers
+    for (var size in widget.photoBook.size) {
+      _sizeControllers[size.name] = TextEditingController();
+      _coverControllers[size.name] = {};
+      for (var coverFinish in widget.photoBook.coverFinish) {
+        _coverControllers[size.name]![coverFinish.name] = TextEditingController();
+      }
+    }
   }
 
   @override
   void dispose() {
     _startDateController.dispose();
     _endDateController.dispose();
+    _valueController.dispose();
     _tabController.dispose();
+    for (var controller in _sizeControllers.values) {
+      controller.dispose();
+    }
+    _coverControllers.values.expand((map) => map.values).forEach((controller) => controller.dispose());
     super.dispose();
   }
 
@@ -74,16 +69,14 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
     setState(() {
       _imagePreview = widget.photoBook.coverImageUrl.isNotEmpty
           ? CachedNetworkImage(
-              imageUrl: widget.photoBook.coverImageUrl,
-              placeholder: (context, url) => const CircularProgressIndicator(),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-            )
-          : Image.asset(
-              'assets/logo.png'); // Replace with your default image asset path
+        imageUrl: widget.photoBook.coverImageUrl,
+        placeholder: (context, url) => const CircularProgressIndicator(),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
+      )
+          : Image.asset('assets/logo.png'); // Replace with your default image asset path
     });
   }
 
-  // Method to handle updating cover image URL
   Future<void> _updateCoverImageUrl() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -96,8 +89,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
       });
 
       if (_imageFile != null) {
-        firebase_storage.Reference ref = firebase_storage
-            .FirebaseStorage.instance
+        firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
             .ref()
             .child('photobook_cover_images')
             .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
@@ -134,6 +126,26 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
     }
   }
 
+  Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          dateStart = picked;
+          _startDateController.text = '${dateStart!.toLocal()}'.split(' ')[0];
+        } else {
+          dateEnd = picked;
+          _endDateController.text = '${dateEnd!.toLocal()}'.split(' ')[0];
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,7 +164,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
               Tab(text: 'Miniature'),
               Tab(text: 'Printing Time'),
               Tab(text: 'Flip Book'),
-              Tab(text: 'Cover Finish'), // New tab for Cover Finish
+              Tab(text: 'Cover Finish'),
             ],
           ),
         ),
@@ -165,10 +177,9 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
           _buildDetailTab('Description: ${widget.photoBook.description}'),
           _buildDetailTab('Size: ${widget.photoBook.size}'),
           _buildDetailTab('Miniature: ${widget.photoBook.miniature}'),
-          _buildDetailTab(
-              'Printing Time: ${widget.photoBook.printingTime} days'),
+          _buildDetailTab('Printing Time: ${widget.photoBook.printingTime} days'),
           _buildFlipBookTab(),
-          _buildCoverFinishTab(), // New tab view for Cover Finish
+          _buildCoverFinishTab(),
         ],
       ),
     );
@@ -185,186 +196,279 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
     );
   }
 
+
+
   Widget _buildPriceTab() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Grouped Value and Date Pickers inside the same border
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Original Value TextFormField
-                  TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Value',
-                      border: InputBorder.none,
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Value is required';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      // Save the value here
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Date pickers for start and end dates
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller:
-                              _startDateController, // Add controller here
-                          decoration: const InputDecoration(
-                            labelText: 'Select Start Date',
-                            border: InputBorder.none,
-                          ),
-                          readOnly: true,
-                          onTap: () => _selectDate(context, isStartDate: true),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _endDateController, // Add controller here
-                          decoration: const InputDecoration(
-                            labelText: 'Select End Date',
-                            border: InputBorder.none,
-                          ),
-                          readOnly: true,
-                          onTap: () => _selectDate(context, isStartDate: false),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Generate a group of TextFormField for each size in the PhotoBook
-            ...widget.photoBook.size.map((size) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16.0),
-                padding: const EdgeInsets.all(8.0),
+      child: Form(
+        key: _formKey, // Assign the form key here
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
+                padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Size: $size',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.0,
+                    TextFormField(
+                      controller: _valueController,
+                      decoration: const InputDecoration(
+                        labelText: 'Value',
+                        border: OutlineInputBorder(),
+                        errorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.red),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.red),
+                        ),
                       ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Value is required';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        // Save the value if needed
+                      },
                     ),
-                    const SizedBox(height: 10),
-
-                    // Print all coverFinish.name and add a TextField for "cover value"
-                    ...widget.photoBook.coverFinish.map((coverFinish) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Cover Finish: ${coverFinish.name}',
-                            style: const TextStyle(fontSize: 14.0),
-                          ),
-                          const SizedBox(height: 8),
-
-                          // TextField for cover value
-                          TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Cover value for ${coverFinish.name}',
-                              border:
-                                  const OutlineInputBorder(), // Add border for better design
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _startDateController,
+                            decoration: const InputDecoration(
+                              labelText: 'Select Start Date',
+                              border: OutlineInputBorder(),
+                              errorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.red),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.red),
+                              ),
                             ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Cover value for ${coverFinish.name} is required';
-                              }
-                              return null;
-                            },
-                            onSaved: (value) {
-                              // Save the cover value for this coverFinish.name
-                            },
+                            readOnly: true,
+                            onTap: () => _selectDate(context, isStartDate: true),
                           ),
-                          const SizedBox(height: 10),
-                        ],
-                      );
-                    }).toList(),
-
-                    const SizedBox(height: 10),
-
-                    TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Price for size $size',
-                        border:
-                            const OutlineInputBorder(), // Add border for better design
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Price for size $size is required';
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        // Save the price value for this size
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Page value for size $size',
-                        border:
-                            const OutlineInputBorder(), // Add border for better design
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Page value for size $size is required';
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        // Save the page value for this size
-                      },
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _endDateController,
+                            decoration: const InputDecoration(
+                              labelText: 'Select End Date',
+                              border: OutlineInputBorder(),
+                              errorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.red),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.red),
+                              ),
+                            ),
+                            readOnly: true,
+                            onTap: () => _selectDate(context, isStartDate: false),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              );
-            }).toList(),
+              ),
+              const SizedBox(height: 20),
+              ...widget.photoBook.size.map((size) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Size: $size',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16.0,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...widget.photoBook.coverFinish.map((coverFinish) {
+                        final coverFinishController =
+                        _coverControllers[size.name]?[coverFinish.name];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Cover Finish: ${coverFinish.name}',
+                              style: const TextStyle(fontSize: 14.0),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: coverFinishController,
+                              decoration: InputDecoration(
+                                labelText: 'Cover value for ${coverFinish.name}',
+                                border: const OutlineInputBorder(),
+                                errorBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.red),
+                                ),
+                                focusedErrorBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.red),
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Cover value for ${coverFinish.name} is required';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        );
+                      }),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _sizeControllers[size.name],
+                        decoration: InputDecoration(
+                          labelText: 'Price for size $size',
+                          border: const OutlineInputBorder(),
+                          errorBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Price for size $size is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Page value for size $size',
+                          border: OutlineInputBorder(),
+                          errorBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Page value for size $size is required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              ElevatedButton(
+                onPressed: () {
+                  final formState = _formKey.currentState;
 
-            // ElevatedButton to validate
-            ElevatedButton(
-              onPressed: () {
-                // Validate and save all form fields
-              },
-              child: const Text('Validate'),
-            ),
-          ],
+                  // Validate the form and check if it's valid
+                  bool isValid = formState?.validate() ?? false;
+
+                  if (isValid) {
+                    formState?.save();
+
+                    // Print all form fields here
+                    print('Form Data:');
+                    print('Value: ${_valueController.text}');
+                    print('Start Date: ${_startDateController.text}');
+                    print('End Date: ${_endDateController.text}');
+
+                    for (var size in widget.photoBook.size) {
+                      final sizeController = _sizeControllers[size.name];
+                      final coverFinishControllers = _coverControllers[size.name];
+
+                      if (sizeController != null) {
+                        print('Price for size $size: ${sizeController.text}');
+                      }
+
+                      if (coverFinishControllers != null) {
+                        for (var coverFinish in widget.photoBook.coverFinish) {
+                          final coverFinishController =
+                          coverFinishControllers[coverFinish.name];
+                          if (coverFinishController != null) {
+                            print('Cover value for ${coverFinish.name} in size $size: ${coverFinishController.text}');
+                          }
+                        }
+                      }
+                    }
+                  } else {
+                    // Collect and print errors manually
+                    print('Validation Errors:');
+                    if (_startDateController.text.isEmpty) {
+                      print('Start Date is required.');
+                    }
+                    if (_endDateController.text.isEmpty) {
+                      print('End Date is required.');
+                    }
+                    if (_valueController.text.isEmpty) {
+                      print('Value is required.'); // Print error if value is missing
+                    }
+
+                    for (var size in widget.photoBook.size) {
+                      final sizeController = _sizeControllers[size.name];
+                      if (sizeController?.text.isEmpty ?? true) {
+                        print('Price for size $size is required.');
+                      }
+
+                      final coverFinishControllers = _coverControllers[size.name];
+                      if (coverFinishControllers != null) {
+                        for (var coverFinish in widget.photoBook.coverFinish) {
+                          final coverFinishController = coverFinishControllers[coverFinish.name];
+                          if (coverFinishController?.text.isEmpty ?? true) {
+                            print('Cover value for ${coverFinish.name} in size $size is required.');
+                          }
+                        }
+                      }
+                    }
+
+                    // Show an error message if the form is not valid
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please correct the errors in the form.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Validate'),
+              )
+            ],
+          ),
         ),
       ),
     );
   }
+
+
+
+
+
+
 
   Widget _buildDetailTab(String content) {
     return Padding(
@@ -392,7 +496,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
         ),
         children: List.generate(
           10,
-          (index) => DemoPage(page: index),
+              (index) => DemoPage(page: index),
         ),
       ),
     );
