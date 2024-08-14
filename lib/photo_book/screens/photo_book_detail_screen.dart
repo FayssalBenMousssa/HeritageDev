@@ -9,6 +9,7 @@ import 'package:page_flip/page_flip.dart';
 
 import '../models/photo_book.dart';
 import '../Widget/demo_page.dart';
+import '../models/price.dart';
 
 class PhotoBookDetailScreen extends StatefulWidget {
   final PhotoBook photoBook;
@@ -35,6 +36,8 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
 
   final Map<String, TextEditingController> _sizeControllers = {};
   final Map<String, Map<String, TextEditingController>> _coverControllers = {};
+  final Map<String, TextEditingController> _pageControllers = {};
+
 
   @override
   void initState() {
@@ -42,15 +45,19 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
     _loadInitialImage();
     _tabController = TabController(length: 8, vsync: this);
 
-    // Initialize controllers for sizes and covers
+    // Initialize controllers for sizes, covers, and pages
     for (var size in widget.photoBook.size) {
       _sizeControllers[size.name] = TextEditingController();
+      _pageControllers[size.name] = TextEditingController(); // Initialize page controllers
       _coverControllers[size.name] = {};
       for (var coverFinish in widget.photoBook.coverFinish) {
         _coverControllers[size.name]![coverFinish.name] = TextEditingController();
       }
     }
+
+
   }
+
 
   @override
   void dispose() {
@@ -103,7 +110,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
               .update({'coverImageUrl': imageUrl});
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Cover image updated successfully')),
+            const SnackBar(content: Text('Cover image updated successfully')),
           );
 
           setState(() {
@@ -343,10 +350,10 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
                         decoration: InputDecoration(
                           labelText: 'Price for size $size',
                           border: const OutlineInputBorder(),
-                          errorBorder: OutlineInputBorder(
+                          errorBorder: const OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.red),
                           ),
-                          focusedErrorBorder: OutlineInputBorder(
+                          focusedErrorBorder: const OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.red),
                           ),
                         ),
@@ -360,13 +367,14 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
+                        controller: _pageControllers[size.name],
                         decoration: InputDecoration(
                           labelText: 'Page value for size $size',
-                          border: OutlineInputBorder(),
-                          errorBorder: OutlineInputBorder(
+                          border: const OutlineInputBorder(),
+                          errorBorder: const OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.red),
                           ),
-                          focusedErrorBorder: OutlineInputBorder(
+                          focusedErrorBorder: const OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.red),
                           ),
                         ),
@@ -391,31 +399,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
 
                   if (isValid) {
                     formState?.save();
-
-                    // Print all form fields here
-                    print('Form Data:');
-                    print('Value: ${_valueController.text}');
-                    print('Start Date: ${_startDateController.text}');
-                    print('End Date: ${_endDateController.text}');
-
-                    for (var size in widget.photoBook.size) {
-                      final sizeController = _sizeControllers[size.name];
-                      final coverFinishControllers = _coverControllers[size.name];
-
-                      if (sizeController != null) {
-                        print('Price for size $size: ${sizeController.text}');
-                      }
-
-                      if (coverFinishControllers != null) {
-                        for (var coverFinish in widget.photoBook.coverFinish) {
-                          final coverFinishController =
-                          coverFinishControllers[coverFinish.name];
-                          if (coverFinishController != null) {
-                            print('Cover value for ${coverFinish.name} in size $size: ${coverFinishController.text}');
-                          }
-                        }
-                      }
-                    }
+                    generatePrices();
                   } else {
                     // Collect and print errors manually
                     print('Validation Errors:');
@@ -435,28 +419,26 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
                         print('Price for size $size is required.');
                       }
 
+                      final pageController = _pageControllers[size.name];
+                      if (pageController?.text.isEmpty ?? true) {
+                        print('Page value for size $size is required.');
+                      }
+
                       final coverFinishControllers = _coverControllers[size.name];
                       if (coverFinishControllers != null) {
                         for (var coverFinish in widget.photoBook.coverFinish) {
-                          final coverFinishController = coverFinishControllers[coverFinish.name];
+                          final coverFinishController =
+                          coverFinishControllers[coverFinish.name];
                           if (coverFinishController?.text.isEmpty ?? true) {
                             print('Cover value for ${coverFinish.name} in size $size is required.');
                           }
                         }
                       }
                     }
-
-                    // Show an error message if the form is not valid
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please correct the errors in the form.'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
                   }
                 },
-                child: const Text('Validate'),
-              )
+                child: const Text('Submit'),
+              ),
             ],
           ),
         ),
@@ -465,6 +447,45 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
   }
 
 
+
+  void generatePrices() {
+    final double baseValue = double.tryParse(_valueController.text) ?? 0.0;
+    final DateTime? startDate = dateStart;
+    final DateTime? endDate = dateEnd;
+
+    final List<Price> prices = [];
+    final Map<String, double> sizePrices = {};
+    final Map<String, double> coverPrices = {};
+
+    for (var size in widget.photoBook.size) {
+      final priceForSize = double.tryParse(_sizeControllers[size.name]?.text ?? '0') ?? 0.0;
+      final pageValueForSize = double.tryParse(_coverControllers[size.name]?['page']?.text ?? '0') ?? 0.0;
+
+      sizePrices[size.name] = priceForSize;
+
+      for (var coverFinish in widget.photoBook.coverFinish) {
+        final coverPrice = double.tryParse(_coverControllers[size.name]?[coverFinish.name]?.text ?? '0') ?? 0.0;
+        coverPrices[coverFinish.name] = coverPrice;
+
+        final totalPrice = baseValue + priceForSize  + coverPrice;
+
+        prices.add(Price(
+          id: 0, // You may want to set a unique ID for each entry
+          size: size,
+          coverFinish: coverFinish,
+          dateStart: startDate,
+          dateEnd: endDate,
+          pagePrice: pageValueForSize,
+          value: totalPrice,
+        ));
+      }
+    }
+
+    // Print the list of prices
+    for (var price in prices) {
+      print(price.toString());
+    }
+  }
 
 
 

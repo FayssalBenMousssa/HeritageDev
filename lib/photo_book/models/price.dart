@@ -29,15 +29,22 @@ class Price {
     };
   }
 
+  @override
+  String toString() {
+    return 'Price{id: $id, size: $size, coverFinish: $coverFinish, dateStart: $dateStart, dateEnd: $dateEnd, pagePrice: $pagePrice, value: $value}';
+  }
+
   static Price fromMap(Map<String, dynamic> map) {
     return Price(
       id: map['id'] ?? 0,
       size: Size.fromMap(map['size'] ?? {}), // Assuming Size class has a fromMap() method
-      dateStart: DateTime.parse(map['datestart'] ?? ''),
+      dateStart: DateTime.parse(map['dateStart'] ?? ''),
       dateEnd: DateTime.parse(map['dateEnd'] ?? ''),
       pagePrice: map['pagePrice'] ?? 0.0,
       value: map['value'] ?? 0.0,
       coverFinish: CoverFinish.fromMap(map['coverFinish'] ?? {})
     );
   }
+
+
 }
