@@ -45,17 +45,25 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
     _loadInitialImage();
     _tabController = TabController(length: 8, vsync: this);
 
+    // Set default dates: start as today and end as one year later
+    dateStart = DateTime.now();
+    dateEnd = DateTime.now().add(const Duration(days: 365));
+
+    _startDateController.text = '${dateStart!.toLocal()}'.split(' ')[0];
+    _endDateController.text = '${dateEnd!.toLocal()}'.split(' ')[0];
+
+    // Set default value to 0
+    _valueController.text = '0';
+
     // Initialize controllers for sizes, covers, and pages
     for (var size in widget.photoBook.size) {
-      _sizeControllers[size.name] = TextEditingController();
-      _pageControllers[size.name] = TextEditingController(); // Initialize page controllers
+      _sizeControllers[size.name] = TextEditingController(text: '0');
+      _pageControllers[size.name] = TextEditingController(text: '0'); // Initialize page controllers
       _coverControllers[size.name] = {};
       for (var coverFinish in widget.photoBook.coverFinish) {
-        _coverControllers[size.name]![coverFinish.name] = TextEditingController();
+        _coverControllers[size.name]![coverFinish.name] = TextEditingController(text: '0');
       }
     }
-
-
   }
 
 
