@@ -31,7 +31,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
   DateTime? dateEnd;
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
-  final TextEditingController _valueController = TextEditingController();
+  late TextEditingController _valueController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   final Map<String, TextEditingController> _sizeControllers = {};
@@ -55,15 +55,60 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
     // Set default value to 0
     _valueController.text = '0';
 
-    // Initialize controllers for sizes, covers, and pages
-    for (var size in widget.photoBook.size) {
-      _sizeControllers[size.name] = TextEditingController(text: '0');
-      _pageControllers[size.name] = TextEditingController(text: '0'); // Initialize page controllers
-      _coverControllers[size.name] = {};
-      for (var coverFinish in widget.photoBook.coverFinish) {
-        _coverControllers[size.name]![coverFinish.name] = TextEditingController(text: '0');
+    // // Initialize controllers for sizes, covers, and pages
+    // for (var size in widget.photoBook.size) {
+    //   _sizeControllers[size.name] = TextEditingController(text: '0');
+    //   _pageControllers[size.name] = TextEditingController(text: '0'); // Initialize page controllers
+    //   _coverControllers[size.name] = {};
+    //   for (var coverFinish in widget.photoBook.coverFinish) {
+    //     _coverControllers[size.name]![coverFinish.name] = TextEditingController(text: '0');
+    //   }
+    // }
+    // price printing test
+    if (widget.photoBook.price.isEmpty) {
+      // Initialize controllers with '0' if there are no prices
+      for (var size in widget.photoBook.size) {
+        _sizeControllers[size.name] = TextEditingController(text: '0');
+        _pageControllers[size.name] = TextEditingController(text: '0'); // Initialize page controllers
+        _coverControllers[size.name] = {};
+        for (var coverFinish in widget.photoBook.coverFinish) {
+          _coverControllers[size.name]![coverFinish.name] = TextEditingController(text: '0');
+        }
+      }
+      // Initialize _valueController with '0' if no prices
+      _valueController = TextEditingController(text: '0');
+    } else {
+      // Populate controllers with price data
+      for (var price in widget.photoBook.price) {
+        // Print price details to the terminal
+        print('-----------------------------');
+        print('Price ID: ${price.id}');
+        print('Size: ${price.size.name}');
+        print('Cover Finish: ${price.coverFinish.name}');
+        print('Date Start: ${price.dateStart}');
+        print('Date End: ${price.dateEnd}');
+        print('Page Price: ${price.pagePrice}');
+        print('Value: ${price.value}');
+        print('Size Price: ${price.sizePrice}');
+        print('Cover Price: ${price.coverPrice}');
+        print('-----------------------------');
+
+        // Populate the controllers with the corresponding values
+        _sizeControllers[price.size.name] = TextEditingController(text: price.sizePrice.toString());
+        _pageControllers[price.size.name] = TextEditingController(text: price.pagePrice.toString()); // Set page price controller
+        if (_coverControllers[price.size.name] == null) {
+          _coverControllers[price.size.name] = {};
+        }
+        _coverControllers[price.size.name]![price.coverFinish.name] = TextEditingController(text: price.coverPrice.toString());
+
+        // Set _valueController with the value from the last price entry
+        _valueController = TextEditingController(text: price.value.toString());
       }
     }
+
+
+
+
   }
 
 
@@ -407,7 +452,68 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
 
                   if (isValid) {
                     formState?.save();
-                    generatePrices();
+
+                    // Convert date strings to DateTime
+                    DateTime? startDate = _startDateController.text.isNotEmpty ? DateTime.tryParse(_startDateController.text) : null;
+                    DateTime? endDate = _endDateController.text.isNotEmpty ? DateTime.tryParse(_endDateController.text) : null;
+
+                    // Convert base value to double
+                    double baseValue = double.tryParse(_valueController.text) ?? 0.0;
+
+                    // Prepare the list of prices
+                    List<Price> prices = [];
+
+                    for (var size in widget.photoBook.size) {
+                      final sizePriceString = _sizeControllers[size.name]?.text;
+                      final pageValueForSizeString = _pageControllers[size.name]?.text;
+
+                      // Convert size and page values to double with default value
+                      double sizePrice = sizePriceString?.isNotEmpty == true ? double.tryParse(sizePriceString!) ?? baseValue : baseValue;
+                      double pageValueForSize = pageValueForSizeString?.isNotEmpty == true ? double.tryParse(pageValueForSizeString!) ?? baseValue : baseValue;
+
+                      for (var coverFinish in widget.photoBook.coverFinish) {
+                        final coverValueString = _coverControllers[size.name]?[coverFinish.name]?.text;
+
+                        // Convert cover value to double with default value
+                        double coverValue = coverValueString?.isNotEmpty == true ? double.tryParse(coverValueString!) ?? baseValue : baseValue;
+
+                        // Generate unique document ID for each price entry
+                        DocumentReference docRef = FirebaseFirestore.instance.collection('photoBooks').doc();
+
+                        // Create the price object
+                        Price price = Price(
+                          id: docRef.id,
+                          size: size,
+                          coverFinish: coverFinish,
+                          dateStart: startDate,
+                          dateEnd: endDate,
+                          pagePrice: pageValueForSize,
+                          value: baseValue, // Use baseValue as a fallback for value
+                          sizePrice: sizePrice,
+                          coverPrice: coverValue,
+                        );
+
+                        // Add the price object to the list of prices
+                        prices.add(price);
+                      }
+                    }
+
+                    // Update the photo book document with the list of prices
+                    FirebaseFirestore.instance
+                        .collection('photoBooks')
+                        .doc(widget.photoBook.id)
+                        .update({
+                      'price': prices.map((price) => price.toMap()).toList(),
+                    })
+                        .then((_) {
+                      Navigator.pop(context);
+                    })
+                        .catchError((error) {
+                      print('Failed to update photo book: $error');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to update photo book: $error')),
+                      );
+                    });
                   } else {
                     // Collect and print errors manually
                     print('Validation Errors:');
@@ -447,6 +553,11 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
                 },
                 child: const Text('Submit'),
               ),
+
+
+
+
+
             ],
           ),
         ),
@@ -476,18 +587,47 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen> with Sing
         coverPrices[coverFinish.name] = coverPrice;
 
         final totalPrice = baseValue + priceForSize  + coverPrice;
-
+        DocumentReference docRef =
+        FirebaseFirestore.instance.collection('photoBooks').doc();
         prices.add(Price(
-          id: 0, // You may want to set a unique ID for each entry
+          id: docRef.id, // You may want to set a unique ID for each entry
           size: size,
           coverFinish: coverFinish,
           dateStart: startDate,
           dateEnd: endDate,
           pagePrice: pageValueForSize,
-          value: totalPrice,
+          value: baseValue,
+          sizePrice : priceForSize,
+          coverPrice : baseValue,
+
+
         ));
       }
     }
+
+    FirebaseFirestore.instance
+        .collection('photoBooks')
+        .doc(widget.photoBook.id)
+        .update({
+
+      'price': prices.map((price) => price.toMap()).toList(),
+
+    }).then((_) {
+       Navigator.pop(context);
+    }).catchError((error) {
+      print('Failed to update photo book: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update photo book: $error')),
+      );
+    });
+
+
+
+
+
+
+
+
 
     // Print the list of prices
     for (var price in prices) {

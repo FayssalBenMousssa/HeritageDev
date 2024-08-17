@@ -11,7 +11,8 @@ import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/book_form.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
-import 'package:heritage/photo_book/models/size.dart'; // Import the Size class
+import 'package:heritage/photo_book/models/size.dart';
+
 
 class AddPhotoBookScreen extends StatelessWidget {
   const AddPhotoBookScreen({Key? key}) : super(key: key);
@@ -173,18 +174,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
               ),
 
               const SizedBox(height: 8.0),
-              FormBuilderTextField(
-                name: 'price',
-                decoration: const InputDecoration(labelText: 'Price'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter some text';
-                  }
-                  return null;
-                },
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 8.0),
+
               FormBuilderTextField(
                 name: 'miniature',
                 decoration: const InputDecoration(labelText: 'Miniature'),
@@ -323,11 +313,11 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     final String title = formData?['title'] ?? '';
     final String description = formData?['description'] ?? '';
     final List<Size> selectedSizes = formData?['size'] ?? [];
-    final double price =
-        double.tryParse(formData?['price'] ?? '') ?? 0;
+
     final String miniature = formData?['miniature'] ?? '';
     final double printingTime =
         double.tryParse(formData?['printingTime'] ?? '') ?? 0;
+
 
     final List<Category> selectedCategories = formData?['category'] ?? [];
     final List<BookForm> selectedBookForms = formData?['bookForm'] ?? [];
@@ -348,7 +338,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
       size: selectedSizes,
       paperFinish: selectedPaperFinishes,
       coverFinish: selectedCoverFinishes,
-      price: price,
+      price: [],
       miniature: miniature,
       printingTime: printingTime,
       categories: selectedCategories,

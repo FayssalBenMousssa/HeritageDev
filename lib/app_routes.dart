@@ -25,7 +25,7 @@ class AppRoutes {
     '/category': (context) => const CategoryScreen(),
     '/photo_book': (context) => const PhotoBookScreen(),
     '/photo_book_client': (context) => const PhotoBookClientScreen(),
-    '/price_add': (context) => const AddPriceScreen(),
+
     // Add more routes as needed
   };
 }

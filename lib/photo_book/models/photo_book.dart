@@ -3,6 +3,7 @@ import 'package:heritage/photo_book/models/book_type.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
+import 'package:heritage/photo_book/models/price.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
 class PhotoBook {
@@ -15,7 +16,7 @@ class PhotoBook {
   final List<Size> size;
   final List<PaperFinish> paperFinish;
   final List<CoverFinish> coverFinish;
-  final double price;
+  final List<Price>  price;
   final String miniature;
   final double printingTime;
   final List<Category> categories;
@@ -49,7 +50,7 @@ class PhotoBook {
       'size': size.map((s) => s.toMap()).toList(), // Convert List<Size> to List<Map>
       'paperFinish': paperFinish.map((pf) => pf.toMap()).toList(),
       'coverFinish': coverFinish.map((cf) => cf.toMap()).toList(),
-      'price': price,
+      'price': price.map((price) => price.toMap()).toList(),
       'miniature': miniature,
       'printingTime': printingTime,
       'categories': categories.map((category) => category.toMap()).toList(),
@@ -60,7 +61,7 @@ class PhotoBook {
   static PhotoBook fromMap(Map<String, dynamic> map) {
     try {
       return PhotoBook(
-        id: map['id'] ?? '',
+        id: map['id']  as String,
         pages: List<String>.from(map['pages'] ?? []),
         title: map['title'] ?? '',
         formBook: map['formBook'] != null && map['formBook'] is List
@@ -79,12 +80,21 @@ class PhotoBook {
         coverFinish: map['coverFinish'] != null && map['coverFinish'] is List
             ? List<CoverFinish>.from((map['coverFinish'] as List).map((cfMap) => CoverFinish.fromMap(cfMap)))
             : [],
-        price: map['price'] is num ? (map['price'] as num).toDouble() : 0.0, // Handle conversion to double
+        price: map['price'] != null && map['price'] is List
+            ? List<Price>.from((map['price'] as List).map((priceMap) => Price.fromMap(priceMap)))
+            : [],
+
+
+
         miniature: map['miniature'] ?? '', // Handle as String
-        printingTime: map['printingTime'] is num ? (map['printingTime'] as num).toDouble() : 0.0, // Handle conversion to double
+        printingTime: map['printingTime'] is num ? (map['printingTime'] as num).toDouble() : 0.0,
+
+        // Handle conversion to double
         categories: map['categories'] != null && map['categories'] is List
             ? List<Category>.from((map['categories'] as List).map((categoryMap) => Category.fromMap(categoryMap)))
             : [],
+
+
         coverImageUrl: map['coverImageUrl'] ?? '',
       );
     } catch (e) {
