@@ -1,10 +1,9 @@
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/photo_book.dart';
 import 'package:heritage/photo_book/screens/add_photo_book_screen.dart';
-import 'package:heritage/photo_book/screens/edit_photo_book_screen.dart'; // Import EditPhotoBookScreen
+import 'package:heritage/photo_book/screens/edit_photo_book_screen.dart';
 import 'package:heritage/photo_book/screens/photo_book_detail_screen.dart';
 
 class PhotoBookScreen extends StatefulWidget {
@@ -23,8 +22,8 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
   @override
   Widget build(BuildContext context) {
     final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-     log(arguments.toString()) ;
-    log('--------------------') ;
+    log(arguments.toString());
+    log('--------------------');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Photo Books'),
@@ -53,7 +52,6 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
           try {
             _photoBooks = snapshot.data!.docs
                 .map((doc) {
-
               return PhotoBook.fromMap(doc.data() as Map<String, dynamic>);
             })
                 .toList();
@@ -63,11 +61,17 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
             );
           }
 
-          return ListView.builder(
+          return GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1, // 1 item per line
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 8.0,
+              childAspectRatio: 3, // Adjust the aspect ratio for height and width
+            ),
             itemCount: _photoBooks.length,
             itemBuilder: (context, index) {
               PhotoBook photoBook = _photoBooks[index];
-              return _buildDismissiblePhotoBookListItem(photoBook, index);
+              return _buildPhotoBookGridItem(photoBook, index);
             },
           );
         },
@@ -79,7 +83,7 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
     );
   }
 
-  Widget _buildDismissiblePhotoBookListItem(PhotoBook photoBook, int index) {
+  Widget _buildPhotoBookGridItem(PhotoBook photoBook, int index) {
     return Dismissible(
       key: Key(photoBook.id.toString()),
       direction: DismissDirection.endToStart,
@@ -101,33 +105,55 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: Card(
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () => navigateToDetailPhotoBookScreen(photoBook),
+        child: Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
           child: Row(
             children: [
-              SizedBox(width: 16.0),
-              Expanded(
-                child: Text(photoBook.title),
-              ),
-              Expanded(
-                child: Text(
-                  photoBook.size.isNotEmpty ? photoBook.size[0].name ?? 'Default Name' : 'List is empty',
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0), // Add left margin
+                child: Container(
+                  width: 100, // Smaller width for the image
+                  height: 100, // Set the height to match the smaller image
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                    image: DecorationImage(
+                      image: photoBook.coverImageUrl != ''
+                          ? NetworkImage(photoBook.coverImageUrl) as ImageProvider
+                          : const AssetImage('assets/logo.png') as ImageProvider,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
-
-              SizedBox(width: 16.0),
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => navigateToEditPhotoBookScreen(photoBook),
-              ),
-              IconButton(
-                icon: const Icon(Icons.info),
-                onPressed: () => navigateToDetailPhotoBookScreen(photoBook),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        photoBook.title,
+                        style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis, // Handle overflow for long titles
+                      ),
+                      const SizedBox(height: 8.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => navigateToEditPhotoBookScreen(photoBook),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -135,6 +161,10 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
       ),
     );
   }
+
+
+
+
 
   Future<bool?> showDeleteConfirmationDialog() {
     return showDialog<bool>(
