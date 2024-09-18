@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/photo_book.dart';
 
+import '../models/price.dart';
+
 class PhotoBookClientScreen extends StatefulWidget {
   const PhotoBookClientScreen({Key? key}) : super(key: key);
 
@@ -139,16 +141,51 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(
-                photoBook.title,
-                style: TextStyle(fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    photoBook.title,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8.0), // Add spacing between title and lowest price
+                  Text(
+                    getLowestPriceText(photoBook.price), // Use the function here
+                    style: const TextStyle(fontSize: 14.0),
+                  ),
+                ],
               ),
-            ),
+            )
+
+
+
+
+
+
+
+
+
+
           ],
         ),
       ),
     );
+  }
+
+
+  String getLowestPriceText(List<Price> prices) {
+    if (prices.isEmpty) {
+      return 'No prices available';
+    }
+
+    final lowestPrice = prices.reduce((current, next) =>
+    (current.value + current.coverPrice + current.sizePrice) <
+        (next.value + next.coverPrice + next.sizePrice)
+        ? current
+        : next);
+
+    return 'Price begin with: \$${(lowestPrice.value + lowestPrice.coverPrice + lowestPrice.sizePrice).toStringAsFixed(2)}';
   }
 
   void _showPhotoBookDialog(PhotoBook photoBook) {
@@ -156,7 +193,10 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
     final List<String> randomImageUrls = [
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700',
-      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-3-FR.jpg?d=700x700',
+      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',
+      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700'
+
+
     ];
 
     showDialog(
@@ -205,14 +245,23 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0), // Adjust padding around the text
-                  child: Text(
-                    photoBook.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start, // Align text to the start (left)
+                    children: [
+                      Text(
+                        photoBook.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      )
+                    ],
                   ),
-                ),
+                )
+
+
+
+
               ],
             ),
           ),

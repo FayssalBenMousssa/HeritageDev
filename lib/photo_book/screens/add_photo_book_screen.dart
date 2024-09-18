@@ -173,18 +173,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
                     .toList(),
               ),
 
-              const SizedBox(height: 8.0),
 
-              FormBuilderTextField(
-                name: 'miniature',
-                decoration: const InputDecoration(labelText: 'Miniature'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter some text';
-                  }
-                  return null;
-                },
-              ),
               const SizedBox(height: 8.0),
               FormBuilderTextField(
                 name: 'printingTime',
@@ -314,7 +303,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     final String description = formData?['description'] ?? '';
     final List<Size> selectedSizes = formData?['size'] ?? [];
 
-    final String miniature = formData?['miniature'] ?? '';
+
     final double printingTime =
         double.tryParse(formData?['printingTime'] ?? '') ?? 0;
 
@@ -339,10 +328,12 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
       paperFinish: selectedPaperFinishes,
       coverFinish: selectedCoverFinishes,
       price: [],
-      miniature: miniature,
+      miniature: '',
       printingTime: printingTime,
       categories: selectedCategories,
-      coverImageUrl: '', // Set the cover image URL appropriately
+      coverImageUrl: '',
+      borders: '',
+      // Set the cover image URL appropriately
     );
 
     await docRef.set(newPhotoBook.toMap());

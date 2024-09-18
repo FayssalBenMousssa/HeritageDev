@@ -21,6 +21,7 @@ class PhotoBook {
   final double printingTime;
   final List<Category> categories;
    String coverImageUrl;
+    String borders ;
 
   PhotoBook({
     required this.id,
@@ -37,6 +38,7 @@ class PhotoBook {
     required this.printingTime,
     required this.categories,
     required this.coverImageUrl,
+    required this.borders,
   });
 
   Map<String, dynamic> toMap() {
@@ -55,6 +57,7 @@ class PhotoBook {
       'printingTime': printingTime,
       'categories': categories.map((category) => category.toMap()).toList(),
       'coverImageUrl': coverImageUrl,
+      'borders': borders,
     };
   }
 
@@ -96,6 +99,7 @@ class PhotoBook {
 
 
         coverImageUrl: map['coverImageUrl'] ?? '',
+        borders: map['borders'] ?? '',
       );
     } catch (e) {
       print('Error creating PhotoBook from map: $e');

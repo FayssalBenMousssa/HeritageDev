@@ -17,13 +17,11 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
   final CollectionReference photoBooksCollection =
   FirebaseFirestore.instance.collection('photoBooks');
 
-  List<PhotoBook> _photoBooks = [];
-
   @override
   Widget build(BuildContext context) {
     final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    log(arguments.toString());
-    log('--------------------');
+
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Photo Books'),
@@ -49,29 +47,18 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
             );
           }
 
-          try {
-            _photoBooks = snapshot.data!.docs
-                .map((doc) {
-              return PhotoBook.fromMap(doc.data() as Map<String, dynamic>);
-            })
-                .toList();
-          } catch (e) {
-            return Center(
-              child: Text('Error processing data: $e'),
-            );
-          }
-
           return GridView.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 1, // 1 item per line
               crossAxisSpacing: 8.0,
               mainAxisSpacing: 8.0,
-              childAspectRatio: 3, // Adjust the aspect ratio for height and width
+              childAspectRatio: 2, // Adjust the aspect ratio for height and width
             ),
-            itemCount: _photoBooks.length,
+            itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
-              PhotoBook photoBook = _photoBooks[index];
-              return _buildPhotoBookGridItem(photoBook, index);
+              var doc = snapshot.data!.docs[index];
+              PhotoBook photoBook = PhotoBook.fromMap(doc.data() as Map<String, dynamic>);
+              return _buildPhotoBookGridItem(photoBook, doc.id);
             },
           );
         },
@@ -83,22 +70,24 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
     );
   }
 
-  Widget _buildPhotoBookGridItem(PhotoBook photoBook, int index) {
+  Widget _buildPhotoBookGridItem(PhotoBook photoBook, String docId) {
     return Dismissible(
-      key: Key(photoBook.id.toString()),
+      key: Key(docId),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
-        return await showDeleteConfirmationDialog();
+        final shouldDelete = await showDeleteConfirmationDialog();
+        if (shouldDelete == true) {
+          print("User confirmed deletion");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${photoBook.title} deleted')),
+          );
+          deletePhotoBook(docId);
+        } else {
+          print("User canceled deletion");
+        }
+        return shouldDelete; // This will ensure the item is dismissed only if true
       },
-      onDismissed: (direction) {
-        deletePhotoBook(photoBook.id.toString());
-        setState(() {
-          _photoBooks.removeAt(index); // Remove the item from the list
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${photoBook.title} deleted')),
-        );
-      },
+
       background: Container(
         color: Colors.red,
         alignment: Alignment.centerRight,
@@ -122,7 +111,7 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
                   decoration: BoxDecoration(
                     borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                     image: DecorationImage(
-                      image: photoBook.coverImageUrl != ''
+                      image: photoBook.coverImageUrl.isNotEmpty
                           ? NetworkImage(photoBook.coverImageUrl) as ImageProvider
                           : const AssetImage('assets/logo.png') as ImageProvider,
                       fit: BoxFit.cover,
@@ -139,21 +128,27 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
                       Text(
                         photoBook.title,
                         style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis, // Handle overflow for long titles
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8.0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => navigateToEditPhotoBookScreen(photoBook),
-                          ),
-                        ],
+                      const SizedBox(height: 4.0),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: photoBook.price.map((price) {
+                          double bookprice = price.value + price.coverPrice + price.sizePrice;
+                          return Text(
+                            'Prices: \$${bookprice.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 14.0),
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => navigateToEditPhotoBookScreen(photoBook),
               ),
             ],
           ),
@@ -166,27 +161,8 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
 
 
 
-  Future<bool?> showDeleteConfirmationDialog() {
-    return showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Photo Book'),
-          content: const Text('Are you sure you want to delete this photo book?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
+
 
   void navigateToAddPhotoBookScreen() {
     Navigator.push(
@@ -213,7 +189,41 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
     );
   }
 
-  void deletePhotoBook(String photoBookId) {
-    photoBooksCollection.doc(photoBookId).delete();
+  Future<bool?> showDeleteConfirmationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Photo Book'),
+          content: const Text('Are you sure you want to delete this photo book?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                print("Delete action canceled");
+                Navigator.pop(context, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                print("Delete action confirmed");
+                Navigator.pop(context, true);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
+
+  void deletePhotoBook(String photoBookId) {
+    print("deletePhotoBook called with ID: $photoBookId");
+    photoBooksCollection.doc(photoBookId).delete().then((_) {
+      print("Photo book with ID: $photoBookId deleted");
+    }).catchError((error) {
+      print("Failed to delete photo book: $error");
+    });
+  }
+
 }
