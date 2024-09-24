@@ -6,7 +6,7 @@ import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/price.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
-class PhotoBook {
+class Template {
   final String id;
   final List<String> pages;
   final String title;
@@ -23,7 +23,7 @@ class PhotoBook {
    String coverImageUrl;
     String borders ;
 
-  PhotoBook({
+  Template({
     required this.id,
     required this.pages,
     required this.title,
@@ -61,9 +61,9 @@ class PhotoBook {
     };
   }
 
-  static PhotoBook fromMap(Map<String, dynamic> map) {
+  static Template fromMap(Map<String, dynamic> map) {
     try {
-      return PhotoBook(
+      return Template(
         id: map['id']  as String,
         pages: List<String>.from(map['pages'] ?? []),
         title: map['title'] ?? '',
@@ -102,7 +102,7 @@ class PhotoBook {
         borders: map['borders'] ?? '',
       );
     } catch (e) {
-      print('Error creating PhotoBook from map: $e');
+      print('Error creating Template from map: $e');
       throw e; // or handle the error as needed
     }
   }

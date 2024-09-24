@@ -1,32 +1,28 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:page_flip/page_flip.dart';
 
-import '../Widget/ImageSelector.dart';
-import '../models/photo_book.dart';
-import '../Widget/demo_page.dart';
-import '../models/price.dart';
+import 'package:page_flip/page_flip.dart' show PageFlipWidget, PageFlipWidgetState;
 
-class PhotoBookDetailScreen extends StatefulWidget {
-   PhotoBook photoBook;
+import '../../models/price.dart';
+import '../../Widget/ImageSelector.dart';
+import '../../models/template.dart';
+import '../../Widget/demo_page.dart';
 
-   PhotoBookDetailScreen({super.key, required this.photoBook});
+
+class TemplateDetailScreen extends StatefulWidget {
+   Template photoBook;
+
+   TemplateDetailScreen({super.key, required this.photoBook});
 
   @override
-  _PhotoBookDetailScreenState createState() => _PhotoBookDetailScreenState();
+  _TemplateDetailScreenState createState() => _TemplateDetailScreenState();
 }
 
-class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
+class _TemplateDetailScreenState extends State<TemplateDetailScreen>
     with SingleTickerProviderStateMixin {
   final _controller = GlobalKey<PageFlipWidgetState>();
-  File? _imageFile;
-  Widget? _imagePreview;
-  bool _isUploading = false; // Track the upload state
+
   late TabController _tabController;
   bool showListPrice = true;
   String? imageError;
@@ -60,11 +56,11 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
     _endDateController.text = '${dateEnd!.toLocal()}'.split(' ')[0];
     _valueController.text = '0';
 
-    // Fetch PhotoBook from Firestore and update local state
-    fetchPhotoBook(widget.photoBook.id).then((fetchedPhotoBook) {
-      if (fetchedPhotoBook != null) {
+    // Fetch Template from Firestore and update local state
+    fetchTemplate(widget.photoBook.id).then((fetchedTemplate) {
+      if (fetchedTemplate != null) {
         setState(() {
-          _photoBook = fetchedPhotoBook;
+          _photoBook = fetchedTemplate;
           _initializeControllers(); // Initialize controllers based on the fetched data
         });
       }
@@ -72,10 +68,10 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
   }
 
 
-// Local variable to store fetched PhotoBook
-  PhotoBook? _photoBook;
+// Local variable to store fetched Template
+  Template? _photoBook;
 
-// Method to initialize controllers based on the fetched PhotoBook
+// Method to initialize controllers based on the fetched Template
   void _initializeControllers() {
     if (_photoBook != null) {
       // Initialize controllers with data from _photoBook
@@ -170,7 +166,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
             0.0;
         coverPrices[coverFinish.name] = coverPrice;
 
-        final totalPrice = baseValue + priceForSize + coverPrice;
+
         DocumentReference docRef =
         FirebaseFirestore.instance.collection('photoBooks').doc();
         prices.add(Price(
@@ -646,7 +642,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
                         showListPrice = !showListPrice;
 
                       });
-                      await fetchPhotoBook(widget.photoBook.id);
+                      await fetchTemplate(widget.photoBook.id);
                     }).catchError((error) {
                       print('Failed to update photo book: $error');
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -760,10 +756,10 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
   Widget _buildListPrice() {
 
 
-    fetchPhotoBook(widget.photoBook.id).then((fetchedPhotoBook) {
-      if (fetchedPhotoBook != null) {
+    fetchTemplate(widget.photoBook.id).then((fetchedTemplate) {
+      if (fetchedTemplate != null) {
         setState(() {
-          _photoBook = fetchedPhotoBook;
+          _photoBook = fetchedTemplate;
 
         });
       }
@@ -820,7 +816,7 @@ class _PhotoBookDetailScreenState extends State<PhotoBookDetailScreen>
 }
 
 
-Future<PhotoBook?> fetchPhotoBook(String photoBookId) async {
+Future<Template?> fetchTemplate(String photoBookId) async {
   try {
     DocumentSnapshot doc = await FirebaseFirestore.instance
         .collection('photoBooks')
@@ -828,14 +824,14 @@ Future<PhotoBook?> fetchPhotoBook(String photoBookId) async {
         .get();
 
     if (doc.exists) {
-      // Parse the document data to a PhotoBook object
-      return PhotoBook.fromMap(doc.data() as Map<String, dynamic>);
+      // Parse the document data to a Template object
+      return Template.fromMap(doc.data() as Map<String, dynamic>);
     } else {
-      print('PhotoBook with id $photoBookId not found.');
+      print('Template with id $photoBookId not found.');
       return null;
     }
   } catch (e) {
-    print('Error fetching PhotoBook: $e');
+    print('Error fetching Template: $e');
     return null;
   }
 }

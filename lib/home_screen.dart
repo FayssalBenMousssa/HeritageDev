@@ -13,7 +13,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
-    String userEmail = user?.email ?? 'No email available';
+
 
     return Scaffold(
       appBar: AppBar(

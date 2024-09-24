@@ -60,10 +60,7 @@ class LoginScreen extends StatelessWidget {
 
     Future<void> signInWithEmailAndPassword(BuildContext context) async {
       try {
-        auth.UserCredential userCredential = await auth.FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text,
-          password: passwordController.text,
-        );
+
         // Navigate to the HomeScreen after successful login
         Navigator.pushReplacementNamed(context, '/home');
 

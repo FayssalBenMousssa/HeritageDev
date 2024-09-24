@@ -88,8 +88,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           } else {
             final userData = snapshot.data!;
-            final String firstName = userData.firstName ?? '';
-            final String lastName = userData.lastName ?? '';
+            final String firstName = userData.firstName;
+            final String lastName = userData.lastName ;
             final String? photoUrl = userData.photoUrl;
             final String? telephone = userData.telephone;
             final String? address = userData.address;
@@ -121,9 +121,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   if (telephone != null) Text('Telephone: $telephone'),
                   if (address != null) Text('Address: $address'),
-                  if (role != null) Text('Role: $role'),
-                  if (email != null) Text('Email: $email'),
-                  if (lastLogin != null) Text('Last Login: $lastLogin'),
+                  Text('Role: $role'),
+                  Text('Email: $email'),
+                  Text('Last Login: $lastLogin'),
                 ],
               ),
             );

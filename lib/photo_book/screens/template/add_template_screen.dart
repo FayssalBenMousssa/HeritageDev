@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:heritage/photo_book/models/book_type.dart';
-import 'package:heritage/photo_book/models/photo_book.dart';
+import 'package:heritage/photo_book/models/template.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/book_form.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
@@ -14,8 +14,8 @@ import 'package:heritage/photo_book/models/cover_finish.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
 
-class AddPhotoBookScreen extends StatelessWidget {
-  const AddPhotoBookScreen({Key? key}) : super(key: key);
+class AddTemplateScreen extends StatelessWidget {
+  const AddTemplateScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,19 +23,19 @@ class AddPhotoBookScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Add Photo Book'),
       ),
-      body: const AddPhotoBookForm(),
+      body: const AddTemplateForm(),
     );
   }
 }
 
-class AddPhotoBookForm extends StatefulWidget {
-  const AddPhotoBookForm({Key? key}) : super(key: key);
+class AddTemplateForm extends StatefulWidget {
+  const AddTemplateForm({Key? key}) : super(key: key);
 
   @override
-  _AddPhotoBookFormState createState() => _AddPhotoBookFormState();
+  _AddTemplateFormState createState() => _AddTemplateFormState();
 }
 
-class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
+class _AddTemplateFormState extends State<AddTemplateForm> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
 
   List<Category> _categories = [];
@@ -281,7 +281,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState?.saveAndValidate() ?? false) {
-                    _savePhotoBook(context);
+                    _saveTemplate(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Processing Data')),
                     );
@@ -296,7 +296,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     );
   }
 
-  void _savePhotoBook(BuildContext context) async {
+  void _saveTemplate(BuildContext context) async {
     final formData = _formKey.currentState?.value;
 
     final String title = formData?['title'] ?? '';
@@ -317,7 +317,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
     DocumentReference docRef =
     FirebaseFirestore.instance.collection('photoBooks').doc();
 
-    PhotoBook newPhotoBook = PhotoBook(
+    Template newTemplate = Template(
       id: docRef.id,
       pages: [],
       title: title,
@@ -336,7 +336,7 @@ class _AddPhotoBookFormState extends State<AddPhotoBookForm> {
       // Set the cover image URL appropriately
     );
 
-    await docRef.set(newPhotoBook.toMap());
+    await docRef.set(newTemplate.toMap());
     await docRef.update({'id': docRef.id});
 
     Navigator.pop(context);

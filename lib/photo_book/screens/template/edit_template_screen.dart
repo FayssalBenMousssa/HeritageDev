@@ -6,21 +6,21 @@ import 'package:heritage/photo_book/models/book_type.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
-import 'package:heritage/photo_book/models/photo_book.dart';
+import 'package:heritage/photo_book/models/template.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
 
 
-class EditPhotoBookScreen extends StatefulWidget {
-  final PhotoBook photoBook;
+class EditTemplateScreen extends StatefulWidget {
+  final Template photoBook;
 
-  const EditPhotoBookScreen({Key? key, required this.photoBook}) : super(key: key);
+  const EditTemplateScreen({Key? key, required this.photoBook}) : super(key: key);
 
   @override
-  _EditPhotoBookScreenState createState() => _EditPhotoBookScreenState();
+  _EditTemplateScreenState createState() => _EditTemplateScreenState();
 }
 
-class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
+class _EditTemplateScreenState extends State<EditTemplateScreen> {
   final _formKey = GlobalKey<FormState>();
   late String _title;
   late List<Category> _selectedCategories;
@@ -99,7 +99,7 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
     }
   }
 
-  void _updatePhotoBook() {
+  void _updateTemplate() {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
 
@@ -224,7 +224,7 @@ class _EditPhotoBookScreenState extends State<EditPhotoBookScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _updatePhotoBook,
+                onPressed: _updateTemplate,
                 child: const Text('Save Changes'),
               ),
             ],

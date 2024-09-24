@@ -1,21 +1,21 @@
-import 'dart:convert';
+
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/category.dart';
-import 'package:heritage/photo_book/models/photo_book.dart';
+import 'package:heritage/photo_book/models/template.dart';
 
 import '../models/price.dart';
 
-class PhotoBookClientScreen extends StatefulWidget {
-  const PhotoBookClientScreen({Key? key}) : super(key: key);
+class TemplateClientScreen extends StatefulWidget {
+  const TemplateClientScreen({Key? key}) : super(key: key);
 
   @override
-  _PhotoBookClientScreenState createState() => _PhotoBookClientScreenState();
+  _TemplateClientScreenState createState() => _TemplateClientScreenState();
 }
 
-class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
+class _TemplateClientScreenState extends State<TemplateClientScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
@@ -26,8 +26,8 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
       appBar: AppBar(
         title: const Text('Photo Books'),
       ),
-      body: StreamBuilder<List<PhotoBook>>(
-        stream: _getFilteredPhotoBooksStream(category),
+      body: StreamBuilder<List<Template>>(
+        stream: _getFilteredTemplatesStream(category),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -47,7 +47,7 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
             );
           }
 
-          List<PhotoBook> _photoBooks = snapshot.data!;
+          List<Template> _photoBooks = snapshot.data!;
 
           return GridView.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -58,8 +58,8 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
             ),
             itemCount: _photoBooks.length,
             itemBuilder: (context, index) {
-              PhotoBook photoBook = _photoBooks[index];
-              return _buildPhotoBookGridItem(photoBook);
+              Template photoBook = _photoBooks[index];
+              return _buildTemplateGridItem(photoBook);
             },
           );
         },
@@ -67,12 +67,12 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
     );
   }
 
-  Stream<List<PhotoBook>> _getFilteredPhotoBooksStream(Category? category) {
+  Stream<List<Template>> _getFilteredTemplatesStream(Category? category) {
     final CollectionReference photoBooksCollection = FirebaseFirestore.instance.collection('photoBooks');
 
     return photoBooksCollection.snapshots().map((snapshot) {
-      List<PhotoBook> photoBooks = snapshot.docs
-          .map((doc) => PhotoBook.fromMap(doc.data() as Map<String, dynamic>))
+      List<Template> photoBooks = snapshot.docs
+          .map((doc) => Template.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
 
       if (category != null) {
@@ -85,9 +85,9 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
     });
   }
 
-  Widget _buildPhotoBookGridItem(PhotoBook photoBook) {
+  Widget _buildTemplateGridItem(Template photoBook) {
     return GestureDetector(
-      onTap: () => _showPhotoBookDialog(photoBook),
+      onTap: () => _showTemplateDialog(photoBook),
       child: Card(
         elevation: 1,
         shape: RoundedRectangleBorder(
@@ -188,7 +188,7 @@ class _PhotoBookClientScreenState extends State<PhotoBookClientScreen> {
     return 'Price begin with: \$${(lowestPrice.value + lowestPrice.coverPrice + lowestPrice.sizePrice).toStringAsFixed(2)}';
   }
 
-  void _showPhotoBookDialog(PhotoBook photoBook) {
+  void _showTemplateDialog(Template photoBook) {
     // Define a list of random image URLs
     final List<String> randomImageUrls = [
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',

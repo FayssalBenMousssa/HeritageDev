@@ -1,25 +1,26 @@
+
 import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:heritage/photo_book/models/photo_book.dart';
-import 'package:heritage/photo_book/screens/add_photo_book_screen.dart';
-import 'package:heritage/photo_book/screens/edit_photo_book_screen.dart';
-import 'package:heritage/photo_book/screens/photo_book_detail_screen.dart';
+import 'package:heritage/photo_book/models/template.dart';
+import 'package:heritage/photo_book/screens/template/add_template_screen.dart';
+import 'package:heritage/photo_book/screens/template/edit_template_screen.dart';
+import 'package:heritage/photo_book/screens/template/template_detail_screen.dart';
 
-class PhotoBookScreen extends StatefulWidget {
-  const PhotoBookScreen({Key? key}) : super(key: key);
+class TemplateScreen extends StatefulWidget {
+  const TemplateScreen({super.key});
 
   @override
-  _PhotoBookScreenState createState() => _PhotoBookScreenState();
+  TemplateScreenState createState() => TemplateScreenState();
 }
 
-class _PhotoBookScreenState extends State<PhotoBookScreen> {
+class TemplateScreenState extends State<TemplateScreen> {
   final CollectionReference photoBooksCollection =
   FirebaseFirestore.instance.collection('photoBooks');
 
   @override
   Widget build(BuildContext context) {
-    final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
 
 
     return Scaffold(
@@ -36,13 +37,13 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
           if (!snapshot.hasData || snapshot.data == null || snapshot.data!.docs.isEmpty) {
-            return Center(
+            return const Center(
               child: Text('No photo books found'),
             );
           }
@@ -57,37 +58,37 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               var doc = snapshot.data!.docs[index];
-              PhotoBook photoBook = PhotoBook.fromMap(doc.data() as Map<String, dynamic>);
-              return _buildPhotoBookGridItem(photoBook, doc.id);
+              Template photoBook = Template.fromMap(doc.data() as Map<String, dynamic>);
+              return _buildTemplateGridItem(photoBook, doc.id);
             },
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => navigateToAddPhotoBookScreen(),
+        onPressed: () => navigateToAddTemplateScreen(),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildPhotoBookGridItem(PhotoBook photoBook, String docId) {
+  Widget _buildTemplateGridItem(Template photoBook, String docId) {
     return Dismissible(
       key: Key(docId),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
         final shouldDelete = await showDeleteConfirmationDialog();
+
         if (shouldDelete == true) {
-          print("User confirmed deletion");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${photoBook.title} deleted')),
-          );
-          deletePhotoBook(docId);
+          log("User confirmed deletion");
+          deleteTemplate(docId);
+          // Use context after the async operation completes
+          _showDeletionSnackbar(photoBook.title); // Call a method to show the snackbar
         } else {
-          print("User canceled deletion");
+          log("User canceled deletion");
         }
+
         return shouldDelete; // This will ensure the item is dismissed only if true
       },
-
       background: Container(
         color: Colors.red,
         alignment: Alignment.centerRight,
@@ -95,7 +96,7 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       child: GestureDetector(
-        onTap: () => navigateToDetailPhotoBookScreen(photoBook),
+        onTap: () => navigateToDetailTemplateScreen(photoBook),
         child: Card(
           elevation: 3,
           shape: RoundedRectangleBorder(
@@ -148,7 +149,7 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
               ),
               IconButton(
                 icon: const Icon(Icons.edit),
-                onPressed: () => navigateToEditPhotoBookScreen(photoBook),
+                onPressed: () => navigateToEditTemplateScreen(photoBook),
               ),
             ],
           ),
@@ -157,6 +158,14 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
     );
   }
 
+// New method to show the SnackBar
+  void _showDeletionSnackbar(String title) {
+    if (context.mounted) { // Ensure context is still mounted
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$title deleted')),
+      );
+    }
+  }
 
 
 
@@ -164,27 +173,30 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
 
 
 
-  void navigateToAddPhotoBookScreen() {
+
+
+
+  void navigateToAddTemplateScreen() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddPhotoBookScreen()),
+      MaterialPageRoute(builder: (context) => const AddTemplateScreen()),
     );
   }
 
-  void navigateToEditPhotoBookScreen(PhotoBook photoBook) {
+  void navigateToEditTemplateScreen(Template photoBook) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditPhotoBookScreen(photoBook: photoBook),
+        builder: (context) => EditTemplateScreen(photoBook: photoBook),
       ),
     );
   }
 
-  void navigateToDetailPhotoBookScreen(PhotoBook photoBook) {
+  void navigateToDetailTemplateScreen(Template photoBook) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PhotoBookDetailScreen(photoBook: photoBook),
+        builder: (context) => TemplateDetailScreen(photoBook: photoBook),
       ),
     );
   }
@@ -199,14 +211,14 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                print("Delete action canceled");
+                log("Delete action canceled");
                 Navigator.pop(context, false);
               },
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                print("Delete action confirmed");
+                log("Delete action confirmed");
                 Navigator.pop(context, true);
               },
               child: const Text('Delete'),
@@ -217,12 +229,12 @@ class _PhotoBookScreenState extends State<PhotoBookScreen> {
     );
   }
 
-  void deletePhotoBook(String photoBookId) {
-    print("deletePhotoBook called with ID: $photoBookId");
+  void deleteTemplate(String photoBookId) {
+    log("deleteTemplate called with ID: $photoBookId");
     photoBooksCollection.doc(photoBookId).delete().then((_) {
-      print("Photo book with ID: $photoBookId deleted");
+      log("Photo book with ID: $photoBookId deleted");
     }).catchError((error) {
-      print("Failed to delete photo book: $error");
+      log("Failed to delete photo book: $error");
     });
   }
 

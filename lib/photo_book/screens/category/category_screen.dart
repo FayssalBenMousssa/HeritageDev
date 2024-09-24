@@ -2,8 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/category.dart'; // Adjust paths as per your project structure
-import 'package:heritage/photo_book/screens/add_category_screen.dart'; // Assuming you have these screens
-import 'package:heritage/photo_book/screens/edit_category_screen.dart'; // Assuming you have these screens
+import 'package:heritage/photo_book/screens/category/add_category_screen.dart'; // Assuming you have these screens
+import 'package:heritage/photo_book/screens/category/edit_category_screen.dart'; // Assuming you have these screens
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({Key? key}) : super(key: key);
@@ -32,7 +32,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(),
             );
           }
@@ -102,7 +102,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 )
                     : Container(),
               ),
-              SizedBox(width: 16.0),
+              const SizedBox(width: 16.0),
               // Name
               Expanded(
                 child: Text(category.categoryName),
