@@ -15,10 +15,10 @@ class CheckboxListDialog<T> extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CheckboxListDialogState<T> createState() => _CheckboxListDialogState<T>();
+  CheckboxListDialogState<T> createState() => CheckboxListDialogState<T>();
 }
 
-class _CheckboxListDialogState<T> extends State<CheckboxListDialog<T>> {
+class CheckboxListDialogState<T> extends State<CheckboxListDialog<T>> {
   late List<T> _selectedItems;
 
   @override

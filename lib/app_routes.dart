@@ -5,7 +5,8 @@ import 'package:heritage/home_screen.dart';
 import 'package:heritage/authentication/screens/registration_screen.dart';
 import 'package:heritage/authentication/screens/profile_screen.dart';
 import 'package:heritage/authentication/screens/edit_profile_screen.dart';
-import 'package:heritage/photo_book/screens/category_screen.dart';
+import 'package:heritage/photo_book/screens/category//category_screen.dart';
+import 'package:heritage/photo_book/screens/layout/layout_list_screen.dart';
 import 'package:heritage/photo_book/screens/template/template_screen.dart';
 import 'package:heritage/photo_book/screens/photo_book_client_screen.dart';
 import 'package:heritage/photo_book/screens/image_editor_screen.dart';
@@ -24,6 +25,7 @@ class AppRoutes {
     '/category': (context) => const CategoryScreen(),
     '/photo_book': (context) => const TemplateScreen(),
     '/photo_book_client': (context) => const TemplateClientScreen(),
+    '/layout_list_screen': (context) => const LayoutListScreen(),
     '/image_editor': (context) => ImageEditorScreen() ,
     // Add more routes as needed
   };

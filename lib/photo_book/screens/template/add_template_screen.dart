@@ -1,7 +1,8 @@
 
 
 import 'dart:developer';
-
+import 'dart:math';
+import 'package:heritage/photo_book/models/page.dart' as photoBookPage;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -13,9 +14,13 @@ import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
+import '../../models/background.dart';
+import '../../models/layout.dart';
+import '../../models/overlay.dart' as photoBookOverlay ;
+
 
 class AddTemplateScreen extends StatelessWidget {
-  const AddTemplateScreen({Key? key}) : super(key: key);
+  const AddTemplateScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +34,7 @@ class AddTemplateScreen extends StatelessWidget {
 }
 
 class AddTemplateForm extends StatefulWidget {
-  const AddTemplateForm({Key? key}) : super(key: key);
+  const AddTemplateForm({super.key});
 
   @override
   _AddTemplateFormState createState() => _AddTemplateFormState();
@@ -116,9 +121,7 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
           .map((doc) => Size.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
 
-      log("----------size----------");
-      log(_sizes.length.toString());
-      log("------------------------");
+
     });
   }
 
@@ -186,6 +189,24 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
                 },
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 8.0),
+              FormBuilderTextField(
+                name: 'numberPageInitial',
+                decoration: const InputDecoration(labelText: 'Number of Initial Pages'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a valid number';
+                  }
+                  final number = int.tryParse(value);
+                  if (number == null || number <= 0) {
+                    return 'Please enter a valid positive number';
+                  }
+                  return null;
+                },
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 8.0),
+
               const SizedBox(height: 8.0),
 
               FormBuilderCheckboxGroup<Category>(
@@ -303,10 +324,10 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
     final String description = formData?['description'] ?? '';
     final List<Size> selectedSizes = formData?['size'] ?? [];
 
-
     final double printingTime =
         double.tryParse(formData?['printingTime'] ?? '') ?? 0;
-
+    final int? numberPageInitial =
+        int.tryParse(formData?['numberPageInitial'] ?? '') ;
 
     final List<Category> selectedCategories = formData?['category'] ?? [];
     final List<BookForm> selectedBookForms = formData?['bookForm'] ?? [];
@@ -314,25 +335,50 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
     final List<PaperFinish> selectedPaperFinishes = formData?['paperFinish'] ?? [];
     final List<CoverFinish> selectedCoverFinishes = formData?['coverFinish'] ?? [];
 
+
+// Generate a list of pages with random integer IDs and the length of numberPageInitial
+    List<photoBookPage.Page> pages = List.generate(numberPageInitial!, (i) {
+      // Create a random integer generator
+      var random = Random();
+      int randomId = random.nextInt(100000);  // Generates a random integer between 0 and 100,000
+
+      return photoBookPage.Page(
+        id: randomId.toString(),     // Assign the random integer as the id
+
+        photos: [],
+        texts: [],
+        stickers: [],
+        background: Background(id :'',imageUrl:''),
+        overlay: photoBookOverlay.Overlay(id :'',imageUrl:'') ,
+        layout:  Layout( name: '50x25x25',
+          description: 'A template for family photos with three zones.',
+          margin: 1.0,  miniatureImage: 'https://via.placeholder.com/50'
+        ) ,
+      );
+    });
+
+
+
     DocumentReference docRef =
     FirebaseFirestore.instance.collection('photoBooks').doc();
 
     Template newTemplate = Template(
-      id: docRef.id,
-      pages: [],
-      title: title,
-      formBook: selectedBookForms,
-      description: description,
-      type: selectedBookTypes,
-      size: selectedSizes,
-      paperFinish: selectedPaperFinishes,
-      coverFinish: selectedCoverFinishes,
-      price: [],
-      miniature: '',
-      printingTime: printingTime,
-      categories: selectedCategories,
-      coverImageUrl: '',
-      borders: '',
+        id: docRef.id,
+        pages: pages, // Assign the generated pages list
+        title: title,
+        formBook: selectedBookForms,
+        description: description,
+        type: selectedBookTypes,
+        size: selectedSizes,
+        paperFinish: selectedPaperFinishes,
+        coverFinish: selectedCoverFinishes,
+        price: [],
+        miniature: '',
+        printingTime: printingTime,
+        categories: selectedCategories,
+        coverImageUrl: '',
+        borders: '',
+        numberPageInitial: numberPageInitial
       // Set the cover image URL appropriately
     );
 
@@ -341,4 +387,5 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
 
     Navigator.pop(context);
   }
+
 }

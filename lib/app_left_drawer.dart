@@ -53,9 +53,16 @@ class AppLeftDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            title: const Text('photo edit  '), // Add menu item for Photo Books
+            title: const Text('Photo Edit  '), // Add menu item for Photo Books
             onTap: () {
               Navigator.pushNamed(context, '/image_editor');
+            },
+          ),
+
+          ListTile(
+            title: const Text('Layout List  '), // Add menu item for Photo Books
+            onTap: () {
+              Navigator.pushNamed(context, '/layout_list_screen');
             },
           ),
           const Divider(),

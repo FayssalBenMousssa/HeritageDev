@@ -1,9 +1,15 @@
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:page_flip/page_flip.dart' show PageFlipWidget, PageFlipWidgetState;
 
+import '../../Widget/flip_book_tab.dart';
+import '../../models/layout.dart';
+
+import '../../models/page.dart';
 import '../../models/price.dart';
 import '../../Widget/ImageSelector.dart';
 import '../../models/template.dart';
@@ -105,21 +111,6 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen>
         .forEach((controller) => controller.dispose());
     super.dispose();
   }
-
-  // void _loadInitialImage() {
-  //   setState(() {
-  //     _imagePreview = widget.photoBook.coverImageUrl.isNotEmpty
-  //         ? CachedNetworkImage(
-  //       imageUrl: widget.photoBook.coverImageUrl,
-  //       placeholder: (context, url) => const CircularProgressIndicator(),
-  //       errorWidget: (context, url, error) => const Icon(Icons.error),
-  //     )
-  //         : Image.asset(
-  //         'assets/logo.png'); // Replace with your default image asset path
-  //   });
-  // }
-
-
 
   Future<void> _selectDate(BuildContext context,
       {required bool isStartDate})
@@ -238,13 +229,26 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen>
           _buildDetailTab('Description: ${widget.photoBook.description}'),
           _buildDetailTab('Size: ${widget.photoBook.size}'),
           _buildDetailTab('Printing Time: ${widget.photoBook.printingTime} days'),
-          _buildFlipBookTab(),
+
+          PageDetailWidget(
+            pages: widget.photoBook.pages, // Ensure correct casting
+            numberPageInitial: widget.photoBook.numberPageInitial,
+            photobookId : widget.photoBook.id
+          ),
+
+
           _buildCoverFinishTab(),
         ],
       ),
     );
   }
 
+
+
+  List<Layout> templates = [
+
+
+  ];
 
 
 
@@ -264,10 +268,6 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen>
               // Update the corresponding photoBook field with the new image URL
               imageUrl = newImageUrl; // Update dynamically based on the tab
 
-              print("new newImageUrl");
-              print(newImageUrl);
-              print("------------------");
-
               // Update the Firestore document with the correct field name
               FirebaseFirestore.instance
                   .collection('photoBooks')
@@ -285,75 +285,6 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen>
       ],
     );
   }
-
-
-
-
-
-
-  // Widget _buildImageThumbnail(Widget imagePreview) {
-  //   return Stack(
-  //     alignment: Alignment.center,
-  //     children: [
-  //       Card(
-  //         child: AspectRatio(
-  //           aspectRatio: 1.0, // 1:1 aspect ratio
-  //           child: imagePreview,
-  //         ),
-  //       ),
-  //       Positioned(
-  //         top: 10,
-  //         right: 10,
-  //         child: IconButton(
-  //           onPressed: () => _selectImage(imagePreview),
-  //           icon: const Icon(Icons.edit),
-  //           color: Colors.black54,
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
-  // Future<void> _selectImage(Widget imagePreview) async {
-  //   final picker = ImagePicker();
-  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-  //
-  //   print("----------------------") ;
-  //   print(imagePreview) ;
-  //   print("----------------------") ;
-  //   if (pickedFile != null) {
-  //     // Perform async operations like uploading to Firebase outside of setState
-  //     _imageFile = File(pickedFile.path);
-  //     imageError = null; // Reset error state
-  //
-  //     firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
-  //         .ref()
-  //         .child('photobook_borders')
-  //         .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-  //     await ref.putFile(_imageFile!);
-  //     var imageUrl = await ref.getDownloadURL();
-  //
-  //     // Once async work is done, call setState to update the state
-  //     setState(() {
-  //       FirebaseFirestore.instance
-  //           .collection('photoBooks')
-  //           .doc(widget.photoBook.id)
-  //           .update({
-  //         'borders' : imageUrl, // Store the image file path as a string
-  //       });
-  //     });
-  //   } else {
-  //     setState(() {
-  //       imageError = 'No image selected';
-  //     });
-  //   }
-  // }
-
-
-
-
-
-
 
 
 
@@ -715,26 +646,35 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen>
   }
 
   Widget _buildFlipBookTab() {
-    return Container(
-      margin: const EdgeInsets.all(15.0),
-      padding: const EdgeInsets.all(3.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.blueAccent),
-      ),
-      child: PageFlipWidget(
-        key: _controller,
-        backgroundColor: Colors.white,
-        lastPage: Container(
-          color: Colors.white,
-          child: const Center(child: Text('Last Page!')),
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(15.0),
+        padding: const EdgeInsets.all(3.0),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.blueAccent),
         ),
-        children: List.generate(
-          10,
-              (index) => DemoPage(page: index),
+        child: SizedBox(
+          width: 300,  // Set a fixed size
+          height: 300, // Keep height equal to width
+          child: PageFlipWidget(
+            key: _controller,
+            backgroundColor: Colors.white,
+            lastPage: Container(
+              color: Colors.white,
+              child: const Center(child: Text('Last Page!')),
+            ),
+            children: List.generate(
+              36,
+                  (index) => DemoPage(page: index),
+            ),
+          ),
         ),
       ),
     );
   }
+
+
+
 
   Widget _buildCoverFinishTab() {
     return ListView.builder(

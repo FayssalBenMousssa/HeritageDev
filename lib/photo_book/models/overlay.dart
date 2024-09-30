@@ -1,5 +1,5 @@
 class Overlay {
-  final int id;
+  final String id;
   final String imageUrl;
 
   Overlay({
@@ -16,7 +16,7 @@ class Overlay {
 
   factory Overlay.fromMap(Map<String, dynamic> map) {
     return Overlay(
-      id: map['id'],
+      id: map['id']?? '',
       imageUrl: map['imageUrl'] ?? '',
     );
   }

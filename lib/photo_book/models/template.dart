@@ -2,13 +2,14 @@ import 'package:heritage/photo_book/models/book_form.dart';
 import 'package:heritage/photo_book/models/book_type.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
+import 'package:heritage/photo_book/models/page.dart';
 import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/price.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
 class Template {
   final String id;
-  final List<String> pages;
+  final List<Page> pages;
   final String title;
   final List<BookForm> formBook;
   final String description;
@@ -20,7 +21,10 @@ class Template {
   final String miniature;
   final double printingTime;
   final List<Category> categories;
-   String coverImageUrl;
+  final  int numberPageInitial ;
+
+
+  String coverImageUrl;
     String borders ;
 
   Template({
@@ -39,12 +43,14 @@ class Template {
     required this.categories,
     required this.coverImageUrl,
     required this.borders,
+    this.numberPageInitial = 36, // Assign default value of 36
+
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'pages': pages,
+      'pages': pages.map((f) => f.toMap()).toList(),
       'title': title,
       'formBook': formBook.map((f) => f.toMap()).toList(),
       'description': description,
@@ -58,17 +64,28 @@ class Template {
       'categories': categories.map((category) => category.toMap()).toList(),
       'coverImageUrl': coverImageUrl,
       'borders': borders,
+      'numberPageInitial' : numberPageInitial,
     };
   }
 
+
+
+
   static Template fromMap(Map<String, dynamic> map) {
     try {
+
+
       return Template(
         id: map['id']  as String,
-        pages: List<String>.from(map['pages'] ?? []),
+        pages:  map['pages'] != null && map['pages'] is List
+            ? List<Page>.from((map['pages'] as List).map((PageMap) => Page.fromMap(PageMap)))
+            : [],
+
+
         title: map['title'] ?? '',
         formBook: map['formBook'] != null && map['formBook'] is List
-            ? List<BookForm>.from((map['formBook'] as List).map((formBookMap) => BookForm.fromMap(formBookMap)))
+            ? List<BookForm>.from((map['formBook'] as
+        List).map((formBookMap) => BookForm.fromMap(formBookMap)))
             : [],
         description: map['description'] ?? '',
         type: map['type'] != null && map['type'] is List
@@ -100,6 +117,8 @@ class Template {
 
         coverImageUrl: map['coverImageUrl'] ?? '',
         borders: map['borders'] ?? '',
+        numberPageInitial: map['numberPageInitial'] is num ? (map['numberPageInitial'] as num).toInt() : 0,
+
       );
     } catch (e) {
       print('Error creating Template from map: $e');

@@ -6,22 +6,24 @@ import 'package:heritage/photo_book/models/sticker.dart';
 import 'package:heritage/photo_book/models/text_item.dart';
 
 class Page {
-  final int id;
+  final String id;
   final List<Photo> photos;
   final List<TextItem> texts;
   final List<Sticker> stickers;
-  final Background background;
-  final Overlay overlay;
-  final Layout layout;
+   Background? background;
+   Overlay? overlay;
+   Layout? layout;
+
 
   Page({
     required this.id,
     required this.photos,
     required this.texts,
     required this.stickers,
-    required this.background,
-    required this.overlay,
-    required this.layout,
+     this.background,
+     this.overlay,
+     this.layout,
+
   });
 
   Map<String, dynamic> toMap() {
@@ -30,9 +32,9 @@ class Page {
       'photos': photos.map((photo) => photo.toMap()).toList(),
       'texts': texts.map((text) => text.toMap()).toList(),
       'stickers': stickers.map((sticker) => sticker.toMap()).toList(),
-      'background': background.toMap(),
-      'overlay': overlay.toMap(),
-      'layout': layout.toMap(),
+      'background': background?.toMap(),
+      'overlay': overlay?.toMap(),
+      'layout': layout?.toMap()
     };
   }
 
@@ -48,6 +50,12 @@ class Page {
       background: Background.fromMap(map['background']),
       overlay: Overlay.fromMap(map['overlay']),
       layout: Layout.fromMap(map['layout']),
+
     );
+  }
+
+  @override
+  String toString() {
+    return 'Page(id: $id, photos: ${photos.length}), layout : ${layout?.miniatureImage}'; // Customize as needed
   }
 }
