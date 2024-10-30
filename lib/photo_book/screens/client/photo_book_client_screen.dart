@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/template.dart';
 
-import '../models/price.dart';
+import '../../models/price.dart';
+import 'creation_photo_book_screen.dart';
 
 class TemplateClientScreen extends StatefulWidget {
   const TemplateClientScreen({Key? key}) : super(key: key);
@@ -158,15 +159,6 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
               ),
             )
 
-
-
-
-
-
-
-
-
-
           ],
         ),
       ),
@@ -195,15 +187,13 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700',
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700'
-
-
     ];
 
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          insetPadding: EdgeInsets.all(5), // Remove default padding
+          insetPadding: const EdgeInsets.all(5), // Remove default padding
           child: Container(
             width: 400, // Width of the dialog
             height: 400, // Height of the dialog
@@ -244,9 +234,9 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(16.0), // Adjust padding around the text
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Align text to the start (left)
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         photoBook.title,
@@ -254,14 +244,20 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
-                      )
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Close the dialog
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => CreationPhotoBookScreen(photoBook: photoBook),
+                          ));
+                        },
+                        child: const Text('Create Photo Book'),
+                      ),
                     ],
                   ),
                 )
-
-
-
-
               ],
             ),
           ),
@@ -269,6 +265,7 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
       },
     );
   }
+
 
 
 

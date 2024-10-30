@@ -6,14 +6,14 @@ class Layout {
   final String name; // Name of the collage template
   final String description;
   final double margin;
-  //final List<Zone> zones;
+  final List<Zone> zones;
   final String miniatureImage; // Path or URL to miniature image preview
 
   Layout({
     required this.name,
     required this.description,
     required this.margin,
-    //required this.zones,
+    required this.zones,
     required this.miniatureImage,
   });
 
@@ -23,7 +23,7 @@ class Layout {
       'name': name,
       'description': description,
       'margin': margin,
-      //'zones': zones.map((zone) => zone.toMap()).toList(), // Ensure each Zone is converted to a map
+      'zones': zones.map((zone) => zone.toMap()).toList(), // Ensure each Zone is converted to a map
       'miniatureImage': miniatureImage,
     };
   }
@@ -34,9 +34,9 @@ class Layout {
       name: map['name'] ?? '', // Assign default value if not present
       description: map['description'] ?? '',
       margin: map['margin']?.toDouble() ?? 0.0, // Ensure margin is a double
-     // zones: (map['zones'] as List<dynamic>?)
-      //    ?.map((zoneMap) => Zone.fromMap(zoneMap as Map<String, dynamic>))
-         // .toList() ?? [],
+      zones: (map['zones'] as List<dynamic>?)
+          ?.map((zoneMap) => Zone.fromMap(zoneMap as Map<String, dynamic>))
+          .toList() ?? [],
       miniatureImage: map['miniatureImage'] ?? '',
     );
   }

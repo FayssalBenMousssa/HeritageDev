@@ -1,5 +1,3 @@
-
-
 import 'dart:developer';
 import 'dart:math';
 import 'package:heritage/photo_book/models/page.dart' as photoBookPage;
@@ -14,10 +12,11 @@ import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/cover_finish.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
+import '../../../clippers/rectangle_clipper.dart';
 import '../../models/background.dart';
 import '../../models/layout.dart';
 import '../../models/overlay.dart' as photoBookOverlay ;
-
+import '../../models/zone.dart';
 
 class AddTemplateScreen extends StatelessWidget {
   const AddTemplateScreen({super.key});
@@ -348,11 +347,17 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
         photos: [],
         texts: [],
         stickers: [],
-        background: Background(id :'',imageUrl:''),
+        background:  'background Image',
         overlay: photoBookOverlay.Overlay(id :'',imageUrl:'') ,
         layout:  Layout( name: '50x25x25',
           description: 'A template for family photos with three zones.',
-          margin: 1.0,  miniatureImage: 'https://via.placeholder.com/50'
+          margin: 1.0,
+            zones: [
+              Zone(left: 0, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/109'),
+              Zone(left: 150, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/110'),
+            ],
+
+            miniatureImage: 'https://via.placeholder.com/50'
         ) ,
       );
     });

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../clippers/rectangle_clipper.dart';
 import '../../models/layout.dart';
+import '../../models/zone.dart';
 
 class AddLayoutScreen extends StatelessWidget {
   const AddLayoutScreen({Key? key}) : super(key: key);
@@ -33,6 +35,7 @@ class _AddLayoutFormState extends State<AddLayoutForm> {
   void initState() {
     super.initState();
     // Pre-fill the miniatureImage field with the default URL
+    uploadLayoutsToFirestore();
     _formKey.currentState?.fields['miniatureImage']?.didChange(defaultImageUrl);
   }
 
@@ -127,6 +130,10 @@ class _AddLayoutFormState extends State<AddLayoutForm> {
       name: name,
       description: description,
       margin: margin,
+      zones: [
+        Zone(left: 0, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/109'),
+        Zone(left: 150, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/110'),
+      ],
       miniatureImage: miniatureImage,
     );
 
@@ -135,4 +142,74 @@ class _AddLayoutFormState extends State<AddLayoutForm> {
     // Navigate back to LayoutListScreen after saving
     Navigator.pop(context);
   }
+
+
+// Upload Layouts to Firestore
+  Future<void> uploadLayoutsToFirestore() async {
+    // List of layouts to upload
+    List<Layout> layouts = [
+      Layout(
+        name: 'Two Vertical Zones',
+        description: 'Two vertically stacked zones',
+        margin: 10.0,
+        miniatureImage: 'https://firebasestorage.googleapis.com/v0/b/heritagebookapp-8f680.appspot.com/o/photobook_miniature%2FM1.png?alt=media&token=29001dbe-8339-46f6-99e4-adb30bef135a',
+        zones: [
+          Zone(left: 0, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/100'),
+          Zone(left: 150, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/101'),
+        ],
+      ),
+      Layout(
+        name: 'Four Square Zones',
+        description: 'Four equally sized square zones',
+        margin: 10.0,
+        miniatureImage: 'https://firebasestorage.googleapis.com/v0/b/heritagebookapp-8f680.appspot.com/o/photobook_miniature%2FM2.png?alt=media&token=4026c36c-00e2-472e-a671-b2cd2546c416',
+        zones: [
+          Zone(left: 0, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/102'),
+          Zone(left: 150, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/103'),
+          Zone(left: 0, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/104'),
+          Zone(left: 150, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/105'),
+        ],
+      ),
+      Layout(
+        name: 'One Large and Two Small Zones',
+        description: 'One large zone on the left and two smaller zones on the right',
+        margin: 10.0,
+        miniatureImage: 'https://firebasestorage.googleapis.com/v0/b/heritagebookapp-8f680.appspot.com/o/photobook_miniature%2FM3.png?alt=media&token=11afc154-50d2-449b-bb7b-0062a171cf3a',
+        zones: [
+          Zone(left: 0, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/106'),
+          Zone(left: 150, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/107'),
+          Zone(left: 150, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/108'),
+        ],
+      ),
+      // Add the remaining layouts in a similar manner...
+    ];
+
+    // Reference to Firestore collection
+    CollectionReference layoutsCollection = FirebaseFirestore.instance.collection('layouts');
+
+    // Loop through layouts and add them to Firestore
+    for (Layout layout in layouts) {
+      print(layout.name);
+      Map<String, dynamic> layoutData = {
+        'name': layout.name,
+        'description': layout.description,
+        'margin': layout.margin,
+        'miniatureImage': layout.miniatureImage,
+        'zones': layout.zones.map((zone) => {
+          'left': zone.left,
+          'top': zone.top,
+          'width': zone.width,
+          'height': zone.height,
+          'clipper': zone.clipper.runtimeType.toString(),
+          'imageUrl': zone.imageUrl,
+        }).toList(),
+      };
+
+      // Add the layout to Firestore
+      await layoutsCollection.add(layoutData);
+    }
+
+    print('Layouts uploaded successfully!');
+  }
+
 }

@@ -10,7 +10,7 @@ class Page {
   final List<Photo> photos;
   final List<TextItem> texts;
   final List<Sticker> stickers;
-   Background? background;
+    String  background;
    Overlay? overlay;
    Layout? layout;
 
@@ -20,7 +20,7 @@ class Page {
     required this.photos,
     required this.texts,
     required this.stickers,
-     this.background,
+     required this.background,
      this.overlay,
      this.layout,
 
@@ -32,7 +32,7 @@ class Page {
       'photos': photos.map((photo) => photo.toMap()).toList(),
       'texts': texts.map((text) => text.toMap()).toList(),
       'stickers': stickers.map((sticker) => sticker.toMap()).toList(),
-      'background': background?.toMap(),
+      'background': background,
       'overlay': overlay?.toMap(),
       'layout': layout?.toMap()
     };
@@ -47,7 +47,7 @@ class Page {
           map['texts']?.map((text) => TextItem.fromMap(text)) ?? []),
       stickers: List<Sticker>.from(
           map['stickers']?.map((sticker) => Sticker.fromMap(sticker)) ?? []),
-      background: Background.fromMap(map['background']),
+      background: map['background'],
       overlay: Overlay.fromMap(map['overlay']),
       layout: Layout.fromMap(map['layout']),
 
