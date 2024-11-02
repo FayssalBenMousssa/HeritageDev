@@ -7,6 +7,7 @@ import '../../models/page.dart' as photobook;
 import '../../models/layout.dart';
 import '../../models/template.dart';
 import '../../models/zone.dart';
+import 'custom_image_picker.dart';
 
 class CreationPhotoBookScreen extends StatefulWidget {
   final Template photoBook;
@@ -24,7 +25,7 @@ class CreationPhotoBookScreen extends StatefulWidget {
 class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
   final ImagePicker _picker = ImagePicker();
   int selectedPageIndex = 0;
-  Map<String, dynamic>? draggedZoneInfo;
+  int? draggedZoneIndex;
 
   @override
   void initState() {
@@ -58,15 +59,14 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     }
   }
 
-  void _onImageDrop(int fromZoneIndex, int fromPageIndex, int toZoneIndex, int toPageIndex) {
+  void _swapImagesBetweenZones(int fromZoneIndex, int toZoneIndex) {
     setState(() {
-      String tempImage = widget.photoBook.pages[toPageIndex].layout!.zones[toZoneIndex].imageUrl;
-      widget.photoBook.pages[toPageIndex].layout!.zones[toZoneIndex].imageUrl =
-          widget.photoBook.pages[fromPageIndex].layout!.zones[fromZoneIndex].imageUrl;
-      widget.photoBook.pages[fromPageIndex].layout!.zones[fromZoneIndex].imageUrl = tempImage;
+      final layout = widget.photoBook.pages[selectedPageIndex].layout!;
+      String tempImage = layout.zones[toZoneIndex].imageUrl;
+      layout.zones[toZoneIndex].imageUrl = layout.zones[fromZoneIndex].imageUrl;
+      layout.zones[fromZoneIndex].imageUrl = tempImage;
     });
   }
-
   Future<void> _pickMultipleImages() async {
     int totalZones = 0;
 
@@ -76,27 +76,43 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
       }
     }
 
-    final List<XFile>? images = await _picker.pickMultiImage();
-
-    if (images != null && images.isNotEmpty) {
-      setState(() {
-        int imageIndex = 0;
-
-        for (var page in widget.photoBook.pages) {
-          if (page.layout != null) {
-            for (var zone in page.layout!.zones) {
-              if (imageIndex < images.length && imageIndex < totalZones) {
-                zone.imageUrl = images[imageIndex].path;
-                imageIndex++;
-              } else {
-                break;
-              }
-            }
-          }
-        }
-      });
+    if (totalZones == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No zones available to assign images.')),
+      );
+      return;
     }
+
+    // Navigate to the custom image picker
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CustomImagePicker(
+          maxImages: totalZones,
+          onImagesSelected: (selectedPaths) {
+            setState(() {
+              int imageIndex = 0;
+
+              for (var page in widget.photoBook.pages) {
+                if (page.layout != null) {
+                  for (var zone in page.layout!.zones) {
+                    if (imageIndex < selectedPaths.length) {
+                      zone.imageUrl = selectedPaths[imageIndex];
+                      imageIndex++;
+                    } else {
+                      break;
+                    }
+                  }
+                }
+              }
+            });
+          },
+        ),
+      ),
+    );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -108,43 +124,34 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
       ),
       body: Column(
         children: [
-          if (pages[selectedPageIndex].layout != null)
-            Expanded(
-              child: LayoutWidget(
-                layout: pages[selectedPageIndex].layout!,
-                backgroundUrl: pages[selectedPageIndex].background, // Pass each page's background URL
-                onImageTap: _pickImage,
-                onImageDrop: (fromZoneIndex, toZoneIndex) {
-                  if (draggedZoneInfo != null) {
-                    _onImageDrop(
-                      draggedZoneInfo!['zoneIndex'],
-                      draggedZoneInfo!['pageIndex'],
-                      toZoneIndex,
-                      selectedPageIndex,
-                    );
-                    draggedZoneInfo = null;
-                  }
-                },
-                onDragStart: (zoneIndex) {
-                  draggedZoneInfo = {
-                    'zoneIndex': zoneIndex,
-                    'pageIndex': selectedPageIndex
-                  };
-                },
-              ),
-            )
-          else
-            Container(
-              height: 250,
-              color: Colors.grey[300],
-              child: const Center(
-                child: Text(
-                  'No Layout Selected',
-                  style: TextStyle(color: Colors.black, fontSize: 16),
+          // Use SingleChildScrollView to allow for scrolling
+          Expanded(
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: double.infinity, // Ensure it occupies full width
+                height: 400, // Set a fixed height for the layout display
+                child: pages[selectedPageIndex].layout != null
+                    ? LayoutWidget(
+                  layout: pages[selectedPageIndex].layout!,
+                  backgroundUrl: pages[selectedPageIndex].background,
+                  onImageTap: _pickImage,
+                  onImageDrop: _swapImagesBetweenZones,
+                  onDragStart: (zoneIndex) {
+                    draggedZoneIndex = zoneIndex;
+                  },
+                )
+                    : Container(
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: Text(
+                      'No Layout Selected',
+                      style: TextStyle(color: Colors.black, fontSize: 16),
+                    ),
+                  ),
                 ),
               ),
             ),
-
+          ),
           SizedBox(
             height: 150,
             child: ListView.builder(
@@ -196,7 +203,6 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
               },
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
@@ -228,48 +234,48 @@ class LayoutWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate layout dimensions with extra padding for all zones
     Size layoutSize = _calculateLayoutSize(layout);
+    const double padding = 16.0; // Padding around the entire layout
 
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-      margin: const EdgeInsets.all(16.0),
-      child: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(backgroundUrl),
-            fit: BoxFit.cover,
-          ),
-        ),
+    return Center( // Center the entire layout widget
+      child: Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+        margin: const EdgeInsets.all(16.0),
         child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: SizedBox(
-            width: layoutSize.width + 10,
-            height: layoutSize.height - 50,
+          padding: const EdgeInsets.all(padding),
+          child: Container(
+            width: layoutSize.width + 2 * padding,
+            height: layoutSize.height + 2 * padding,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: NetworkImage(backgroundUrl),
+                fit: BoxFit.cover,
+              ),
+            ),
             child: Stack(
-              children: layout.zones.asMap().entries.map((entry) {
-                int zoneIndex = entry.key;
-                Zone zone = entry.value;
-
+              children: layout.zones.map((zone) {
+                // Adjust the position of each zone relative to the center of the layout
                 return Positioned(
-                  left: zone.left,
-                  top: zone.top,
-                  width: zone.width - 2,
-                  height: zone.height - 2,
+                  left: zone.left + padding,
+                  top: zone.top + padding,
+                  width: zone.width,
+                  height: zone.height,
                   child: DragTarget<int>(
                     onAccept: (fromZoneIndex) {
-                      onImageDrop(fromZoneIndex, zoneIndex);
+                      onImageDrop(fromZoneIndex, layout.zones.indexOf(zone));
                     },
                     builder: (context, candidateData, rejectedData) {
                       return GestureDetector(
-                        onTap: () => onImageTap(zoneIndex, layout),
-                        onPanStart: (_) => onDragStart(zoneIndex),
+                        onTap: () => onImageTap(layout.zones.indexOf(zone), layout),
+                        onPanStart: (_) => onDragStart(layout.zones.indexOf(zone)),
                         child: Container(
-                          margin: const EdgeInsets.all(2.0),
+                          margin: const EdgeInsets.all(4.0), // Padding around each zone
                           color: Colors.grey[100],
                           child: zone.imageUrl.isNotEmpty
                               ? Draggable<int>(
-                            data: zoneIndex,
+                            data: layout.zones.indexOf(zone),
                             feedback: ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: Image.file(
@@ -287,19 +293,22 @@ class LayoutWidget extends StatelessWidget {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(4),
-                              child: InteractiveViewer(
-                                panEnabled: true,
-                                minScale: 0.5,
-                                maxScale: 3.0,
-                                child: Image.file(
-                                  File(zone.imageUrl),
-                                  fit: BoxFit.cover,
-                                ),
+                              child: Image.file(
+                                File(zone.imageUrl),
+                                fit: BoxFit.cover,
+                                height: zone.height,
+                                width: zone.width,
                               ),
                             ),
                           )
-                              : const Center(
-                            child: Text('Tap to add image'),
+                              : Container(
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Text(
+                                'No Image',
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                            ),
                           ),
                         ),
                       );
@@ -319,8 +328,8 @@ class LayoutWidget extends StatelessWidget {
     double maxHeight = 0;
 
     for (Zone zone in layout.zones) {
-      maxWidth = max(maxWidth, zone.width + zone.left);
-      maxHeight = max(maxHeight, zone.height + zone.top);
+      maxWidth = max(maxWidth, zone.left + zone.width);
+      maxHeight = max(maxHeight, zone.top + zone.height);
     }
 
     return Size(maxWidth, maxHeight);
