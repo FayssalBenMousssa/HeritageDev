@@ -215,7 +215,7 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     );
   }
 }
-
+//
 class LayoutWidget extends StatelessWidget {
   final Layout layout;
   final String backgroundUrl;
@@ -234,89 +234,85 @@ class LayoutWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate layout dimensions with extra padding for all zones
+    // Calculate layout dimensions with additional padding for the background
     Size layoutSize = _calculateLayoutSize(layout);
-    const double padding = 16.0; // Padding around the entire layout
+    const double backgroundPadding = 20.0; // Increase this for more background space
 
-    return Center( // Center the entire layout widget
+    return Center(
       child: Card(
         elevation: 5,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         margin: const EdgeInsets.all(16.0),
-        child: Padding(
-          padding: const EdgeInsets.all(padding),
-          child: Container(
-            width: layoutSize.width + 2 * padding,
-            height: layoutSize.height + 2 * padding,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(backgroundUrl),
-                fit: BoxFit.cover,
-              ),
+        child: Container(
+          width: layoutSize.width + 2 * backgroundPadding,
+          height: layoutSize.height + 2 * backgroundPadding,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(backgroundUrl),
+              fit: BoxFit.cover,
             ),
-            child: Stack(
-              children: layout.zones.map((zone) {
-                // Adjust the position of each zone relative to the center of the layout
-                return Positioned(
-                  left: zone.left + padding,
-                  top: zone.top + padding,
-                  width: zone.width,
-                  height: zone.height,
-                  child: DragTarget<int>(
-                    onAccept: (fromZoneIndex) {
-                      onImageDrop(fromZoneIndex, layout.zones.indexOf(zone));
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      return GestureDetector(
-                        onTap: () => onImageTap(layout.zones.indexOf(zone), layout),
-                        onPanStart: (_) => onDragStart(layout.zones.indexOf(zone)),
-                        child: Container(
-                          margin: const EdgeInsets.all(4.0), // Padding around each zone
-                          color: Colors.grey[100],
-                          child: zone.imageUrl.isNotEmpty
-                              ? Draggable<int>(
-                            data: layout.zones.indexOf(zone),
-                            feedback: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: Image.file(
-                                File(zone.imageUrl),
-                                width: zone.width,
-                                height: zone.height,
-                                fit: BoxFit.cover,
-                              ),
+          ),
+          child: Stack(
+            children: layout.zones.map((zone) {
+              return Positioned(
+                left: zone.left + backgroundPadding,
+                top: zone.top + backgroundPadding,
+                width: zone.width,
+                height: zone.height,
+                child: DragTarget<int>(
+                  onAccept: (fromZoneIndex) {
+                    onImageDrop(fromZoneIndex, layout.zones.indexOf(zone));
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    return GestureDetector(
+                      onTap: () => onImageTap(layout.zones.indexOf(zone), layout),
+                      onPanStart: (_) => onDragStart(layout.zones.indexOf(zone)),
+                      child: Container(
+                        margin: const EdgeInsets.all(4.0), // Padding around each zone
+                        color: Colors.grey[100],
+                        child: zone.imageUrl.isNotEmpty
+                            ? Draggable<int>(
+                          data: layout.zones.indexOf(zone),
+                          feedback: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.file(
+                              File(zone.imageUrl),
+                              width: zone.width,
+                              height: zone.height,
+                              fit: BoxFit.cover,
                             ),
-                            childWhenDragging: Container(
-                              color: Colors.grey[300],
-                              child: const Center(
-                                child: Text('Dragging...'),
-                              ),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: Image.file(
-                                File(zone.imageUrl),
-                                fit: BoxFit.cover,
-                                height: zone.height,
-                                width: zone.width,
-                              ),
-                            ),
-                          )
-                              : Container(
+                          ),
+                          childWhenDragging: Container(
                             color: Colors.grey[300],
                             child: const Center(
-                              child: Text(
-                                'No Image',
-                                style: TextStyle(color: Colors.black54),
-                              ),
+                              child: Text('Dragging...'),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.file(
+                              File(zone.imageUrl),
+                              fit: BoxFit.cover,
+                              height: zone.height,
+                              width: zone.width,
+                            ),
+                          ),
+                        )
+                            : Container(
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: Text(
+                              'No Image',
+                              style: TextStyle(color: Colors.black54),
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            }).toList(),
           ),
         ),
       ),
@@ -335,3 +331,5 @@ class LayoutWidget extends StatelessWidget {
     return Size(maxWidth, maxHeight);
   }
 }
+
+// good
