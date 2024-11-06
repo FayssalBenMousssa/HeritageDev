@@ -331,5 +331,3 @@ class LayoutWidget extends StatelessWidget {
     return Size(maxWidth, maxHeight);
   }
 }
-
-// good
