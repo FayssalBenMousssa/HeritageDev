@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../controller/image_editor.dart';
 
-class ImageEditorScreen extends StatelessWidget {
+class OldImageEditorScreen extends StatelessWidget {
   final ImageEditor controller = Get.put(ImageEditor());
 
   // List of stickers and their positions on the image

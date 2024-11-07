@@ -8,6 +8,7 @@ import '../../models/layout.dart';
 import '../../models/template.dart';
 import '../../models/zone.dart';
 import 'custom_image_picker.dart';
+import 'image_editor_screen.dart';
 
 class CreationPhotoBookScreen extends StatefulWidget {
   final Template photoBook;
@@ -67,6 +68,17 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
       layout.zones[fromZoneIndex].imageUrl = tempImage;
     });
   }
+
+  // New function to handle zone updates
+  void _updateZone(Zone updatedZone, Layout layout) {
+    setState(() {
+      int index = layout.zones.indexWhere((zone) => zone == updatedZone);
+      if (index != -1) {
+        layout.zones[index] = updatedZone;
+      }
+    });
+  }
+
   Future<void> _pickMultipleImages() async {
     int totalZones = 0;
 
@@ -78,12 +90,11 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
 
     if (totalZones == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No zones available to assign images.')),
+        const SnackBar(content: Text('No zones available to assign images.')),
       );
       return;
     }
 
-    // Navigate to the custom image picker
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -112,8 +123,6 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final List<photobook.Page> pages = widget.photoBook.pages;
@@ -124,12 +133,11 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
       ),
       body: Column(
         children: [
-          // Use SingleChildScrollView to allow for scrolling
           Expanded(
             child: SingleChildScrollView(
               child: SizedBox(
-                width: double.infinity, // Ensure it occupies full width
-                height: 400, // Set a fixed height for the layout display
+                width: double.infinity,
+                height: 400,
                 child: pages[selectedPageIndex].layout != null
                     ? LayoutWidget(
                   layout: pages[selectedPageIndex].layout!,
@@ -139,6 +147,7 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
                   onDragStart: (zoneIndex) {
                     draggedZoneIndex = zoneIndex;
                   },
+                  onZoneUpdated: _updateZone, // Pass the update function
                 )
                     : Container(
                   color: Colors.grey[300],
@@ -215,13 +224,20 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     );
   }
 }
-//
+
+
+
+
+
+
+
 class LayoutWidget extends StatelessWidget {
   final Layout layout;
   final String backgroundUrl;
   final Function(int zoneIndex, Layout layout) onImageTap;
   final Function(int fromZoneIndex, int toZoneIndex) onImageDrop;
   final Function(int zoneIndex) onDragStart;
+  final Function(Zone updatedZone, Layout layout) onZoneUpdated;
 
   const LayoutWidget({
     Key? key,
@@ -230,13 +246,13 @@ class LayoutWidget extends StatelessWidget {
     required this.onImageTap,
     required this.onImageDrop,
     required this.onDragStart,
+    required this.onZoneUpdated,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Calculate layout dimensions with additional padding for the background
     Size layoutSize = _calculateLayoutSize(layout);
-    const double backgroundPadding = 20.0; // Increase this for more background space
+    const double backgroundPadding = 20.0;
 
     return Center(
       child: Card(
@@ -254,6 +270,7 @@ class LayoutWidget extends StatelessWidget {
           ),
           child: Stack(
             children: layout.zones.map((zone) {
+              print("Zone scale: ${zone.scale}, Zone offset: ${zone.offset}"); // Debugging
               return Positioned(
                 left: zone.left + backgroundPadding,
                 top: zone.top + backgroundPadding,
@@ -267,19 +284,28 @@ class LayoutWidget extends StatelessWidget {
                     return GestureDetector(
                       onTap: () => onImageTap(layout.zones.indexOf(zone), layout),
                       onPanStart: (_) => onDragStart(layout.zones.indexOf(zone)),
+                      onLongPress: () async {
+                        final updatedZone = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ImageEditorScreen(zone: zone),
+                          ),
+                        );
+                        if (updatedZone != null) {
+                          onZoneUpdated(updatedZone, layout); // Call the callback to update the zone
+                        }
+                      },
                       child: Container(
-                        margin: const EdgeInsets.all(4.0), // Padding around each zone
+                        margin: const EdgeInsets.all(4.0),
                         color: Colors.grey[100],
                         child: zone.imageUrl.isNotEmpty
                             ? Draggable<int>(
                           data: layout.zones.indexOf(zone),
                           feedback: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: Image.file(
-                              File(zone.imageUrl),
-                              width: zone.width,
-                              height: zone.height,
-                              fit: BoxFit.cover,
+                            child: AspectRatio(
+                              aspectRatio: zone.width / zone.height,
+                              child: _buildTransformedImage(zone),
                             ),
                           ),
                           childWhenDragging: Container(
@@ -290,11 +316,9 @@ class LayoutWidget extends StatelessWidget {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: Image.file(
-                              File(zone.imageUrl),
-                              fit: BoxFit.cover,
-                              height: zone.height,
-                              width: zone.width,
+                            child: AspectRatio(
+                              aspectRatio: zone.width / zone.height,
+                              child: _buildTransformedImage(zone),
                             ),
                           ),
                         )
@@ -319,6 +343,20 @@ class LayoutWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildTransformedImage(Zone zone) {
+    return Transform.translate(
+      offset: Offset(zone.offset.dx * zone.width, zone.offset.dy * zone.height),
+      child: Transform.scale(
+        scale: zone.scale,
+        alignment: Alignment.center,
+        child: Image.file(
+          File(zone.imageUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
   Size _calculateLayoutSize(Layout layout) {
     double maxWidth = 0;
     double maxHeight = 0;
@@ -331,3 +369,12 @@ class LayoutWidget extends StatelessWidget {
     return Size(maxWidth, maxHeight);
   }
 }
+
+
+
+
+
+
+
+
+

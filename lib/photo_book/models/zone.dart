@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../../clippers/circle_clipper.dart';
@@ -21,6 +20,10 @@ class Zone {
   final CustomClipper<Path> clipper;
   String imageUrl; // URL or path for the image
 
+  // New properties for zoom and pan transformations
+  double scale;
+  Offset offset;
+
   Zone({
     required this.left,
     required this.top,
@@ -28,6 +31,8 @@ class Zone {
     required this.height,
     required this.clipper,
     required this.imageUrl, // Add image to zone
+    this.scale = 1.0, // Default zoom level
+    this.offset = Offset.zero, // Default offset (no pan)
   });
 
   // Convert Zone object to a Map
@@ -39,6 +44,9 @@ class Zone {
       'height': height,
       'clipper': clipper.runtimeType.toString(),
       'imageUrl': imageUrl, // Add image URL to the Map
+      'scale': scale, // Add scale to the Map
+      'offsetX': offset.dx, // Store offset X component
+      'offsetY': offset.dy, // Store offset Y component
     };
   }
 
@@ -51,6 +59,11 @@ class Zone {
       height: map['height']?.toDouble() ?? 100.0,
       clipper: _getClipperFromString(map['clipper'] as String),
       imageUrl: map['imageUrl'] ?? '', // Add image URL initialization
+      scale: map['scale']?.toDouble() ?? 1.0, // Initialize scale
+      offset: Offset(
+        map['offsetX']?.toDouble() ?? 0.0,
+        map['offsetY']?.toDouble() ?? 0.0,
+      ), // Initialize offset
     );
   }
 
@@ -82,5 +95,3 @@ class Zone {
     }
   }
 }
-
-
