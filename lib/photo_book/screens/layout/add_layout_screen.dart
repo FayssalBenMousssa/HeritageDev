@@ -131,8 +131,8 @@ class _AddLayoutFormState extends State<AddLayoutForm> {
       description: description,
       margin: margin,
       zones: [
-        Zone(left: 0, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/109'),
-        Zone(left: 150, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/110'),
+        Zone(left: 0, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
+        Zone(left: 150, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
       ],
       miniatureImage: miniatureImage,
     );
@@ -154,8 +154,8 @@ class _AddLayoutFormState extends State<AddLayoutForm> {
         margin: 10.0,
         miniatureImage: 'https://firebasestorage.googleapis.com/v0/b/heritagebookapp-8f680.appspot.com/o/photobook_miniature%2FM1.png?alt=media&token=29001dbe-8339-46f6-99e4-adb30bef135a',
         zones: [
-          Zone(left: 0, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/100'),
-          Zone(left: 150, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/101'),
+          Zone(left: 0, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
+          Zone(left: 150, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
         ],
       ),
       Layout(
@@ -164,10 +164,10 @@ class _AddLayoutFormState extends State<AddLayoutForm> {
         margin: 10.0,
         miniatureImage: 'https://firebasestorage.googleapis.com/v0/b/heritagebookapp-8f680.appspot.com/o/photobook_miniature%2FM2.png?alt=media&token=4026c36c-00e2-472e-a671-b2cd2546c416',
         zones: [
-          Zone(left: 0, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/102'),
-          Zone(left: 150, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/103'),
-          Zone(left: 0, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/104'),
-          Zone(left: 150, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/105'),
+          Zone(left: 0, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
+          Zone(left: 150, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
+          Zone(left: 0, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
+          Zone(left: 150, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
         ],
       ),
       Layout(
@@ -176,9 +176,9 @@ class _AddLayoutFormState extends State<AddLayoutForm> {
         margin: 10.0,
         miniatureImage: 'https://firebasestorage.googleapis.com/v0/b/heritagebookapp-8f680.appspot.com/o/photobook_miniature%2FM3.png?alt=media&token=11afc154-50d2-449b-bb7b-0062a171cf3a',
         zones: [
-          Zone(left: 0, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/106'),
-          Zone(left: 150, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/107'),
-          Zone(left: 150, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/108'),
+          Zone(left: 0, top: 0, width: 150, height: 300, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
+          Zone(left: 150, top: 0, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
+          Zone(left: 150, top: 150, width: 150, height: 150, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/600/300'),
         ],
       ),
       // Add the remaining layouts in a similar manner...

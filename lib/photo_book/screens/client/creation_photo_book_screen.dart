@@ -252,13 +252,12 @@ class LayoutWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Size layoutSize = _calculateLayoutSize(layout);
-    const double backgroundPadding = 20.0;
-
+    const double backgroundPadding = 10.0;
     return Center(
       child: Card(
-        elevation: 5,
+        elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.all(16.0),
+        margin: const EdgeInsets.all(10.0),
         child: Container(
           width: layoutSize.width + 2 * backgroundPadding,
           height: layoutSize.height + 2 * backgroundPadding,
@@ -270,7 +269,7 @@ class LayoutWidget extends StatelessWidget {
           ),
           child: Stack(
             children: layout.zones.map((zone) {
-              print("Zone scale: ${zone.scale}, Zone offset: ${zone.offset}"); // Debugging
+              print("Initial Zone Info - Scale: ${zone.scale}, Offset: ${zone.offset}"); // Debugging
               return Positioned(
                 left: zone.left + backgroundPadding,
                 top: zone.top + backgroundPadding,
@@ -292,7 +291,7 @@ class LayoutWidget extends StatelessWidget {
                           ),
                         );
                         if (updatedZone != null) {
-                          onZoneUpdated(updatedZone, layout); // Call the callback to update the zone
+                          onZoneUpdated(updatedZone, layout);
                         }
                       },
                       child: Container(
@@ -344,18 +343,34 @@ class LayoutWidget extends StatelessWidget {
   }
 
   Widget _buildTransformedImage(Zone zone) {
-    return Transform.translate(
-      offset: Offset(zone.offset.dx * zone.width, zone.offset.dy * zone.height),
-      child: Transform.scale(
-        scale: zone.scale,
-        alignment: Alignment.center,
-        child: Image.file(
-          File(zone.imageUrl),
-          fit: BoxFit.cover,
+    // Calculate pixel offset from percentage values
+    final offsetX = ((zone.offset.dx / 100) * zone.width); // Convert percentage back to pixels
+    final offsetY = ((zone.offset.dy / 100) * zone.height);
+
+    print("Applying transformation in _buildTransformedImage - "
+        "Saved Offset Percentage: X = ${zone.offset.dx.toStringAsFixed(2)}%, Y = ${zone.offset.dy.toStringAsFixed(2)}%, "
+        "Scale: ${zone.scale.toStringAsFixed(2)}x, "
+        "Calculated Pixel Offset - X: ${offsetX.toStringAsFixed(2)}, Y: ${offsetY.toStringAsFixed(2)}");
+
+    return AspectRatio(
+      aspectRatio: zone.width / zone.height,
+      child: ClipRect(
+        child: Transform.translate(
+          offset: Offset(offsetX, offsetY),
+          child: Transform.scale(
+            scale: zone.scale,
+            alignment: Alignment.center,
+            child: Image.file(
+              File(zone.imageUrl),
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
       ),
     );
   }
+
+
 
   Size _calculateLayoutSize(Layout layout) {
     double maxWidth = 0;
@@ -369,6 +384,7 @@ class LayoutWidget extends StatelessWidget {
     return Size(maxWidth, maxHeight);
   }
 }
+
 
 
 
