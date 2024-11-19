@@ -61,7 +61,7 @@ class Zone {
       top: map['top']?.toDouble() ?? 0.0,
       width: map['width']?.toDouble() ?? 100.0,
       height: map['height']?.toDouble() ?? 100.0,
-      clipper: _getClipperFromString(map['clipper'] as String),
+      clipper: _getClipperFromString(map['clipper'] as String? ?? 'CircleClipper'),
       imageUrl: map['imageUrl'] ?? '',
       scale: map['scale']?.toDouble() ?? 1.0,
       offset: Offset(

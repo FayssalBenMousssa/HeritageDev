@@ -350,7 +350,7 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
         background:  'background Image',
         overlay: photoBookOverlay.Overlay(id :'',imageUrl:'') ,
         layout:  Layout( name: '50x25x25',
-          description: 'A template for family photos with three zones.',
+            description: 'A template for family photos with three zones.',
           margin: 1.0,
             zones: [
               Zone(left: 0, top: 0, width: 150, height: 100, clipper: RectangleClipper(), imageUrl: 'https://picsum.photos/109'),
@@ -359,6 +359,7 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
 
             miniatureImage: 'https://via.placeholder.com/50'
         ) ,
+          isEditable : true
       );
     });
 
@@ -366,6 +367,8 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
 
     DocumentReference docRef =
     FirebaseFirestore.instance.collection('photoBooks').doc();
+
+
 
     Template newTemplate = Template(
         id: docRef.id,
@@ -386,7 +389,9 @@ class _AddTemplateFormState extends State<AddTemplateForm> {
         numberPageInitial: numberPageInitial
       // Set the cover image URL appropriately
     );
-
+    print("--------------------------------------");
+    print(newTemplate);
+    print("--------------------------------------");
     await docRef.set(newTemplate.toMap());
     await docRef.update({'id': docRef.id});
 
