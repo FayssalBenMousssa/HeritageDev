@@ -12,6 +12,7 @@ class LayoutWidget extends StatelessWidget {
   final Function(int zoneIndex, Layout layout) onImageTap;
   final bool isEditable; // Add the editable flag
 
+
   const LayoutWidget({
     Key? key,
     required this.layout,
