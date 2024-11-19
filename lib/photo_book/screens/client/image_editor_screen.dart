@@ -51,6 +51,11 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     final leftPercentage = (translation.x / widget.zone.width) * 100 ;
     final topPercentage = (translation.y / widget.zone.height) * 100 ;
 
+    print ( widget.zone.imageUrl);
+    print(widget.zone.width);
+    print(widget.zone.height);
+
+
     // Calculate the current scale as a percentage of the default scale (1.0)
     final scale = currentMatrix.getMaxScaleOnAxis();
 
