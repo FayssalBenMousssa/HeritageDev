@@ -31,7 +31,7 @@ class LayoutWidget extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(8.0), // Padding inside the Card
           width: layoutSize.width + 12,
-          height: layoutSize.height + 12,
+          height: layoutSize.height + 12 ,
           decoration: BoxDecoration(
             image: DecorationImage(
               image: backgroundUrl.isNotEmpty
@@ -130,15 +130,20 @@ class LayoutWidget extends StatelessWidget {
     );
   }
 
-  // Function to handle image switching
+
+
+// Function to handle image switching
   void _switchImage(Zone zone) {
     // Example implementation for switching images
+    // Replace this logic with actual image-swapping logic based on your app's requirements
     String newImageUrl = "path/to/your/new/image.jpg"; // New image path (hardcoded or dynamic)
     zone.imageUrl = newImageUrl;
 
     // Trigger a UI update (if using state management, update the state accordingly)
     print('Image switched for zone: ${zone.imageUrl}');
   }
+
+
 
   Size _calculateLayoutSize(Layout layout) {
     double maxWidth = 0;
@@ -152,3 +157,8 @@ class LayoutWidget extends StatelessWidget {
     return Size(maxWidth, maxHeight);
   }
 }
+
+
+
+
+

@@ -7,6 +7,8 @@ import 'package:heritage/photo_book/models/paper_finish.dart';
 import 'package:heritage/photo_book/models/price.dart';
 import 'package:heritage/photo_book/models/size.dart';
 
+import 'dart:convert';
+
 class Template {
   final String id;
   final List<Page> pages;
@@ -17,15 +19,13 @@ class Template {
   final List<Size> size;
   final List<PaperFinish> paperFinish;
   final List<CoverFinish> coverFinish;
-  final List<Price>  price;
+  final List<Price> price;
   final String miniature;
   final double printingTime;
   final List<Category> categories;
-  final  int numberPageInitial ;
-
-
+  final int numberPageInitial;
   String coverImageUrl;
-    String borders ;
+  String borders;
 
   Template({
     required this.id,
@@ -34,7 +34,7 @@ class Template {
     required this.formBook,
     required this.description,
     required this.type,
-    required this.size, // Changed from String to List<Size>
+    required this.size,
     required this.paperFinish,
     required this.coverFinish,
     required this.price,
@@ -43,86 +43,83 @@ class Template {
     required this.categories,
     required this.coverImageUrl,
     required this.borders,
-    this.numberPageInitial = 36, // Assign default value of 36
-
+    this.numberPageInitial = 36,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'pages': pages.map((f) => f.toMap()).toList(),
+      'pages': pages.map((page) => page.toMap()).toList(),
       'title': title,
-      'formBook': formBook.map((f) => f.toMap()).toList(),
+      'formBook': formBook.map((form) => form.toMap()).toList(),
       'description': description,
       'type': type.map((t) => t.toMap()).toList(),
-      'size': size.map((s) => s.toMap()).toList(), // Convert List<Size> to List<Map>
+      'size': size.map((s) => s.toMap()).toList(),
       'paperFinish': paperFinish.map((pf) => pf.toMap()).toList(),
       'coverFinish': coverFinish.map((cf) => cf.toMap()).toList(),
-      'price': price.map((price) => price.toMap()).toList(),
+      'price': price.map((p) => p.toMap()).toList(),
       'miniature': miniature,
       'printingTime': printingTime,
       'categories': categories.map((category) => category.toMap()).toList(),
       'coverImageUrl': coverImageUrl,
       'borders': borders,
-      'numberPageInitial' : numberPageInitial,
+      'numberPageInitial': numberPageInitial,
     };
   }
 
-
-
-
   static Template fromMap(Map<String, dynamic> map) {
     try {
-
-
       return Template(
-        id: map['id']  as String,
-        pages:  map['pages'] != null && map['pages'] is List
-            ? List<Page>.from((map['pages'] as List).map((PageMap) => Page.fromMap(PageMap)))
-            : [],
-
-
+        id: map['id'] as String,
+        pages: (map['pages'] as List).map((page) => Page.fromMap(page)).toList(),
         title: map['title'] ?? '',
-        formBook: map['formBook'] != null && map['formBook'] is List
-            ? List<BookForm>.from((map['formBook'] as
-        List).map((formBookMap) => BookForm.fromMap(formBookMap)))
-            : [],
+        formBook: (map['formBook'] as List).map((form) => BookForm.fromMap(form)).toList(),
         description: map['description'] ?? '',
-        type: map['type'] != null && map['type'] is List
-            ? List<BookType>.from((map['type'] as List).map((typeMap) => BookType.fromMap(typeMap)))
-            : [],
-        size: map['size'] != null && map['size'] is List
-            ? List<Size>.from((map['size'] as List).map((sizeMap) => Size.fromMap(sizeMap)))
-            : [],
-        paperFinish: map['paperFinish'] != null && map['paperFinish'] is List
-            ? List<PaperFinish>.from((map['paperFinish'] as List).map((pfMap) => PaperFinish.fromMap(pfMap)))
-            : [],
-        coverFinish: map['coverFinish'] != null && map['coverFinish'] is List
-            ? List<CoverFinish>.from((map['coverFinish'] as List).map((cfMap) => CoverFinish.fromMap(cfMap)))
-            : [],
-        price: map['price'] != null && map['price'] is List
-            ? List<Price>.from((map['price'] as List).map((priceMap) => Price.fromMap(priceMap)))
-            : [],
-
-
-
-        miniature: map['miniature'] ?? '', // Handle as String
+        type: (map['type'] as List).map((t) => BookType.fromMap(t)).toList(),
+        size: (map['size'] as List).map((s) => Size.fromMap(s)).toList(),
+        paperFinish: (map['paperFinish'] as List).map((pf) => PaperFinish.fromMap(pf)).toList(),
+        coverFinish: (map['coverFinish'] as List).map((cf) => CoverFinish.fromMap(cf)).toList(),
+        price: (map['price'] as List).map((p) => Price.fromMap(p)).toList(),
+        miniature: map['miniature'] ?? '',
         printingTime: map['printingTime'] is num ? (map['printingTime'] as num).toDouble() : 0.0,
-
-        // Handle conversion to double
-        categories: map['categories'] != null && map['categories'] is List
-            ? List<Category>.from((map['categories'] as List).map((categoryMap) => Category.fromMap(categoryMap)))
-            : [],
-
-
+        categories: (map['categories'] as List).map((category) => Category.fromMap(category)).toList(),
         coverImageUrl: map['coverImageUrl'] ?? '',
         borders: map['borders'] ?? '',
-        numberPageInitial: map['numberPageInitial'] is num ? (map['numberPageInitial'] as num).toInt() : 0,
-
+        numberPageInitial: map['numberPageInitial'] is num
+            ? (map['numberPageInitial'] as num).toInt()
+            : 0,
       );
     } catch (e) {
       print('Error creating Template from map: $e');
-      throw e; // or handle the error as needed
+      throw e;
     }
+  }
+
+  // Save Template as JSON string
+  String toJson() => json.encode(toMap());
+
+  // Create Template from JSON string
+  static Template fromJson(String jsonString) {
+    final map = json.decode(jsonString) as Map<String, dynamic>;
+    return fromMap(map);
+  }
+
+  // Save Template to Local Storage
+  Future<void> saveToStorage() async {
+    // Example: Save to SharedPreferences or a file
+    // final prefs = await SharedPreferences.getInstance();
+    // prefs.setString('template_$id', toJson());
+    print('Saved template $id to storage');
+  }
+
+  // Load Template from Local Storage
+  static Future<Template?> loadFromStorage(String id) async {
+    // Example: Load from SharedPreferences or a file
+    // final prefs = await SharedPreferences.getInstance();
+    // final jsonString = prefs.getString('template_$id');
+    // if (jsonString == null) return null;
+    // return fromJson(jsonString);
+    print('Loaded template $id from storage');
+    return null;
   }
 }

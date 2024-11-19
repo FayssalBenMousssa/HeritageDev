@@ -1,13 +1,8 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
- 
-
 import '../../models/layout.dart';
-import '../../models/zone.dart';
 import '../../models/template.dart';
 import 'layout_widget.dart';
- 
 
 class CreationPhotoBookScreen extends StatefulWidget {
   final Template photoBook;
