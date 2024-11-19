@@ -31,6 +31,119 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     }
   }
 
+  Future<void> _showDialogBeforeSelection(int totalZones) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing the dialog by tapping outside
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // Optional: rounded corners for the dialog
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Makes the dialog fit the content size
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'Image Selection',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16), // Space between title and message
+                Text(
+                  'You have $totalZones zones.',
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8), // Space between the messages
+                Text(
+                  'Please select $totalZones images.',
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16), // Space between the message and the button
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
+
+  // Allows selecting multiple images and assigns them to zones in order.
+  Future<void> _pickMultipleImages() async {
+    int totalZones = 0;
+
+    for (var page in widget.photoBook.pages) {
+      if (page.layout != null) {
+        totalZones += page.layout!.zones.length;
+      }
+    }
+
+    if (totalZones == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No zones available to assign images.')),
+      );
+      return;
+    }
+
+    final List<XFile>? images = await _picker.pickMultiImage();
+
+    if (images != null && images.isNotEmpty) {
+      setState(() {
+        int imageIndex = 0;
+
+        for (var page in widget.photoBook.pages) {
+          if (page.layout != null) {
+            for (var zone in page.layout!.zones) {
+              if (imageIndex < images.length) {
+                zone.imageUrl = images[imageIndex].path; // Assigns images to zones sequentially.
+                imageIndex++;
+              } else {
+                break;
+              }
+            }
+          }
+        }
+      });
+
+      // Show message with total zones and selected images.
+      _showZoneAndImageInfo(totalZones, images.length);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No images selected.')),
+      );
+    }
+  }
+
+
+  // Function to display a message with total zones and selected images.
+  void _showZoneAndImageInfo(int totalZones, int imageCount) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'You have $totalZones zones and selected $imageCount images.',
+          style: const TextStyle(fontSize: 16),
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+
+
+
   void _toggleEditing(int index) {
     setState(() {
       _isEditingPage[index] = !(_isEditingPage[index] ?? false);
@@ -39,6 +152,28 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
       _isScrollEnabled = !_isEditingPage.values.contains(true);
     });
   }
+
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      int totalZones = 0;
+
+      for (var page in widget.photoBook.pages) {
+        if (page.layout != null) {
+          totalZones += page.layout!.zones.length;
+        }
+      }
+
+      // Show dialog with information before prompting for image selection
+      await _showDialogBeforeSelection(totalZones);
+
+      // After the dialog is dismissed, open the gallery
+      await _pickMultipleImages();
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
