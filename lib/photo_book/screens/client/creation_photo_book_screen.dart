@@ -4,6 +4,12 @@ import '../../models/layout.dart';
 import '../../models/template.dart';
 import 'layout_widget.dart';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../models/layout.dart';
+import '../../models/template.dart';
+import 'layout_widget.dart';
+
 class CreationPhotoBookScreen extends StatefulWidget {
   final Template photoBook;
 
@@ -19,8 +25,8 @@ class CreationPhotoBookScreen extends StatefulWidget {
 
 class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
   final ImagePicker _picker = ImagePicker();
-  final Map<int, bool> _isEditingPage = {}; // Track editing state of pages
-  bool _isScrollEnabled = true; // Controls the scrolling state
+  final Map<int, bool> _isEditingPage = {};
+  bool _isScrollEnabled = true;
 
   Future<void> _pickImage(int zoneIndex, Layout layout) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -34,16 +40,16 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
   Future<void> _showDialogBeforeSelection(int totalZones) async {
     await showDialog(
       context: context,
-      barrierDismissible: false, // Prevent closing the dialog by tapping outside
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // Optional: rounded corners for the dialog
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Makes the dialog fit the content size
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 const Text(
@@ -51,22 +57,22 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16), // Space between title and message
+                const SizedBox(height: 16),
                 Text(
                   'You have $totalZones zones.',
                   style: const TextStyle(fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8), // Space between the messages
+                const SizedBox(height: 8),
                 Text(
                   'Please select $totalZones images.',
                   style: const TextStyle(fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16), // Space between the message and the button
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.of(context).pop();
                   },
                   child: const Text('OK'),
                 ),
@@ -78,10 +84,6 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     );
   }
 
-
-
-
-  // Allows selecting multiple images and assigns them to zones in order.
   Future<void> _pickMultipleImages() async {
     int totalZones = 0;
 
@@ -108,7 +110,7 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
           if (page.layout != null) {
             for (var zone in page.layout!.zones) {
               if (imageIndex < images.length) {
-                zone.imageUrl = images[imageIndex].path; // Assigns images to zones sequentially.
+                zone.imageUrl = images[imageIndex].path;
                 imageIndex++;
               } else {
                 break;
@@ -118,7 +120,6 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
         }
       });
 
-      // Show message with total zones and selected images.
       _showZoneAndImageInfo(totalZones, images.length);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,8 +128,6 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     }
   }
 
-
-  // Function to display a message with total zones and selected images.
   void _showZoneAndImageInfo(int totalZones, int imageCount) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -141,18 +140,18 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     );
   }
 
-
-
-
   void _toggleEditing(int index) {
     setState(() {
       _isEditingPage[index] = !(_isEditingPage[index] ?? false);
-
-      // Disable scrolling if any page is in editing mode
       _isScrollEnabled = !_isEditingPage.values.contains(true);
     });
   }
 
+  void _saveAlbum() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Album is saved successfully!')),
+    );
+  }
 
   @override
   void initState() {
@@ -166,14 +165,10 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
         }
       }
 
-      // Show dialog with information before prompting for image selection
       await _showDialogBeforeSelection(totalZones);
-
-      // After the dialog is dismissed, open the gallery
       await _pickMultipleImages();
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -181,10 +176,15 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.photoBook.title ?? 'Photo Book'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _saveAlbum, // Save album functionality
+          ),
+        ],
       ),
       body: NotificationListener<OverscrollIndicatorNotification>(
         onNotification: (notification) {
-          // Disable glow effect for better UX when scrolling is disabled
           notification.disallowIndicator();
           return false;
         },
@@ -197,7 +197,6 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
               final index = entry.key;
               final page = entry.value;
 
-              // Initialize editing state for the page
               _isEditingPage.putIfAbsent(index, () => false);
 
               return Padding(
@@ -219,7 +218,7 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
                                 : (zoneIndex, layout) {
                               // No-op when editing is disabled
                             },
-                            isEditable: (_isEditingPage[index] ?? false), // Pass the updated editable flag
+                            isEditable: (_isEditingPage[index] ?? false),
                           ),
                         )
                             : Container(
@@ -261,5 +260,6 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
       ),
     );
   }
-
 }
+
+
