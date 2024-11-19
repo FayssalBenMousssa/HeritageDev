@@ -22,6 +22,9 @@ class Zone {
   double height;
   CustomClipper<Path>? clipper;
 
+  // TransformationController for managing transformations, default value provided
+  TransformationController transformationController;
+
   Zone({
     required this.imageUrl,
     this.scale = 1.0,
@@ -31,7 +34,14 @@ class Zone {
     required this.width,
     required this.height,
     this.clipper,
-  });
+  }) : transformationController = TransformationController(
+    Matrix4.identity()
+      ..scale(scale)
+      ..translate(
+        offset.dx * width,
+        offset.dy * height,
+      ),
+  );
 
   Map<String, dynamic> toMap() {
     return {
@@ -88,4 +98,5 @@ class Zone {
     }
   }
 }
+
 

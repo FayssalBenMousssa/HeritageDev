@@ -60,69 +60,85 @@ class LayoutWidget extends StatelessWidget {
     );
   }
 
-  // Function to build an interactive zone for a given Zone object
   Widget _buildInteractiveZone(Zone zone) {
-    // Create a TransformationController for managing scaling and translation of the InteractiveViewer
-    final transformationController = TransformationController(
-      Matrix4.identity() // Initialize the matrix with the identity matrix
-        ..scale(zone.scale) // Apply the scale factor from the zone
-        ..translate(
-          // Translate the view based on the zone's offset and size
-          zone.offset.dx * zone.width,
-          zone.offset.dy * zone.height,
-        ),
-    );
+    // Use the TransformationController stored in the Zone object
+    final transformationController = zone.transformationController;
+
+    // Add a listener to capture transformation changes only if editable
+    if (isEditable) {
+      transformationController.addListener(() {
+        final matrix = transformationController.value;
+
+        // Extract current scale and translation
+        final newScale = matrix.getMaxScaleOnAxis();
+        final newTranslation = matrix.getTranslation();
+
+        // Normalize the translation to calculate offset
+        final newOffset = Offset(
+          newTranslation.x / (zone.width != 0 ? zone.width : 1.0),
+          newTranslation.y / (zone.height != 0 ? zone.height : 1.0),
+        );
+
+        // Update the zone state only if changes are detected
+        if (newScale != zone.scale || newOffset != zone.offset) {
+          zone.scale = newScale;
+          zone.offset = newOffset;
+
+          print('${zone.imageUrl} UPDATED: Scale: ${zone.scale}, Offset: ${zone.offset}');
+        }
+      });
+    }
 
     return Stack(
       children: [
-        // GestureDetector to handle long press for switching images
         GestureDetector(
           onLongPress: () {
-            // Action to switch the image
-            _switchImage(zone);
+            if (isEditable) {
+              _switchImage(zone);
+            }
           },
           child: InteractiveViewer(
-            transformationController: transformationController, // Set the transformation controller
-            boundaryMargin: EdgeInsets.zero, // No boundary margin (restrict movement to the image edges)
-            minScale: 1.0, // Minimum zoom scale (default size)
-            maxScale: 3.0, // Maximum zoom scale (up to 3x)
-            constrained: true, // Ensure the child remains within the bounds of the parent
+            transformationController: transformationController,
+            boundaryMargin: EdgeInsets.zero,
+            panEnabled: isEditable, // Disable panning if not editable
+            minScale: isEditable ? 1.0 : zone.scale, // Disable scaling if not editable
+            maxScale: isEditable ? 3.0 : zone.scale, // Disable scaling if not editable
+            constrained: true,
             child: Image.file(
-              File(zone.imageUrl), // Load the image from the file path provided in the zone
-              fit: BoxFit.cover, // Scale the image to cover the entire available space
-              width: zone.width, // Set the width of the image based on the zone
-              height: zone.height, // Set the height of the image based on the zone
+              File(zone.imageUrl),
+              fit: BoxFit.cover,
+              width: zone.width,
+              height: zone.height,
             ),
           ),
         ),
-        // Show the edit icon only if the page is editable
         if (isEditable)
           Positioned(
-            top: 4, // Position 4 pixels from the top of the InteractiveViewer
-            right: 4, // Position 4 pixels from the right of the InteractiveViewer
+            top: 4,
+            right: 4,
             child: GestureDetector(
               onTap: () => onImageTap(
-                layout.zones.indexOf(zone), // Get the index of the zone
-                layout, // Pass the layout containing all zones
-              ), // Define the tap action for the edit icon
+                layout.zones.indexOf(zone),
+                layout,
+              ),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300), // Smooth transition for any UI changes
+                duration: const Duration(milliseconds: 300),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7), // Semi-transparent black background for better visibility
-                  shape: BoxShape.circle, // Make the background a circular shape
+                  color: Colors.black.withOpacity(0.7),
+                  shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2), // Slight shadow for a raised effect
-                      blurRadius: 4.0, // Blur radius for the shadow
-                      spreadRadius: 2.0, // Spread radius for the shadow
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4.0,
+                      spreadRadius: 2.0,
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(8.0), // Padding around the icon for easier clicking
+                padding: const EdgeInsets.all(8.0),
                 child: const Icon(
-                  Icons.edit, // Icon for the edit button
-                  color: Colors.white, // White color for visibility against the dark background
-                  size: 16, // Slightly larger icon for better visibility
+                  Icons.edit,
+                  color: Colors.white,
+                  size: 16,
                 ),
               ),
             ),
@@ -133,12 +149,17 @@ class LayoutWidget extends StatelessWidget {
 
 
 
+
+
+
+
+
+
+
+
+
 // Function to handle image switching
   void _switchImage(Zone zone) {
-    // Example implementation for switching images
-    // Replace this logic with actual image-swapping logic based on your app's requirements
-    String newImageUrl = "path/to/your/new/image.jpg"; // New image path (hardcoded or dynamic)
-    zone.imageUrl = newImageUrl;
 
     // Trigger a UI update (if using state management, update the state accordingly)
     print('Image switched for zone: ${zone.imageUrl}');
