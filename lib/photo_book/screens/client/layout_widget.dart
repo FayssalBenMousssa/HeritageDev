@@ -104,8 +104,15 @@ class LayoutWidget extends StatelessWidget {
             minScale: isEditable ? 1.0 : zone.scale, // Disable scaling if not editable
             maxScale: isEditable ? 3.0 : zone.scale, // Disable scaling if not editable
             constrained: true,
-            child: Image.file(
-              File(zone.imageUrl),
+            child: zone.imageUrl.startsWith('http') || zone.imageUrl.startsWith('https')
+                ? Image.network(
+              zone.imageUrl, // Firebase Storage URL
+              fit: BoxFit.cover,
+              width: zone.width,
+              height: zone.height,
+            )
+                : Image.file(
+              File(zone.imageUrl), // Local file path
               fit: BoxFit.cover,
               width: zone.width,
               height: zone.height,
