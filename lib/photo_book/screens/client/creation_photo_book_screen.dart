@@ -1,5 +1,12 @@
+import 'dart:io';
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../authentication/models/user_model.dart';
+import '../../models/client_books.dart';
 import '../../models/layout.dart';
 import '../../models/template.dart';
 import 'layout_widget.dart';
@@ -147,11 +154,72 @@ class _CreationPhotoBookScreenState extends State<CreationPhotoBookScreen> {
     });
   }
 
-  void _saveAlbum() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Album is saved successfully!')),
-    );
+  void _saveAlbum() async {
+    final photoBook = widget.photoBook;
+
+    // Map to store updated zones with uploaded image URLs
+    Map<String, dynamic> updatedPhotoBookMap = photoBook.toMap();
+
+    // Loop through each page and zone to upload images
+    for (var page in photoBook.pages) {
+      if (page.layout != null) {
+        for (var zone in page.layout!.zones) {
+          if (zone.imageUrl.isNotEmpty && zone.imageUrl.startsWith('/data')) {
+            // Upload local image to Firebase Storage
+            firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
+                .ref()
+                .child('uploaded_images')
+                .child('${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}.jpg');
+
+            try {
+              await ref.putFile(File(zone.imageUrl));
+              String downloadUrl = await ref.getDownloadURL();
+
+              // Update zone's imageUrl with the Firebase URL
+              zone.imageUrl = downloadUrl;
+            } catch (e) {
+              // Handle upload error
+              print('Error uploading image: $e');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to upload image for zone: $e')),
+              );
+              return; // Exit save operation if upload fails
+            }
+          }
+        }
+      }
+    }
+
+    // Save the updated photo book to Firestore
+    FirebaseFirestore.instance
+        .collection('ClientBooks')
+        .add(updatedPhotoBookMap)
+        .then((docRef) {
+      // Optional: Update the ID of the saved document
+      FirebaseFirestore.instance
+          .collection('ClientBooks')
+          .doc(docRef.id)
+          .update({'id': docRef.id});
+
+      // Notify user of success
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Album is saved successfully!')),
+      );
+    }).catchError((error) {
+      // Handle Firestore save error
+      print('Error saving album: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save album: $error')),
+      );
+    });
   }
+
+
+
+
+
+
+
 
   @override
   void initState() {
