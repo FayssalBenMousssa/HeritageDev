@@ -14,6 +14,8 @@ import 'package:heritage/photo_book/screens/client/photo_book_client_screen.dart
 import 'package:heritage/photo_book/screens/layout/layout_list_screen_new.dart';
 import 'package:heritage/photo_book/screens/client/creation_photo_book_screen.dart';
 
+import 'authentication/screens/create_account_screen.dart';
+
 class AppRoutes {
   static final routes = <String, WidgetBuilder>{
     '/login': (context) => const LoginScreen(),
@@ -30,6 +32,7 @@ class AppRoutes {
     '/layout_list_screen': (context) => const LayoutListScreen(),
     '/layout_list_screen_new': (context) => const LayoutListScreenNew(),
     '/image_editor': (context) => OldImageEditorScreen() ,
+    '/createAccount': (context) => const CreateAccountScreen()
 
     // Add more routes as needed
   };

@@ -9,9 +9,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'app_routes.dart';
 
-
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase with the correct platform options
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -22,7 +23,7 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your  application. test
+  // Root of the application
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -32,14 +33,19 @@ class MyApp extends StatelessWidget {
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
+          // Handle loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Show a loading indicator while checking the user's authentication state
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasData) {
-            // User is already logged in, navigate to the home screen
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Check if the user is authenticated
+          else if (snapshot.hasData) {
+            // User is authenticated, navigate to home screen
             return const HomeScreen();
-          } else {
-            // User is not logged in, navigate to the login screen
+          }
+
+          // User is not authenticated, navigate to the login screen
+          else {
             return const LoginScreen();
           }
         },

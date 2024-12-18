@@ -1,139 +1,210 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:heritage/authentication/screens/registration_screen.dart';
 import '../../home_screen.dart';
-import '../models/user_model.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({Key? key});
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController emailController = TextEditingController();
-    TextEditingController passwordController = TextEditingController();
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-
+    // Google Sign-In Function
     Future<void> signInWithGoogle() async {
       try {
+        // Trigger the Google Sign-In flow
+        final GoogleSignIn googleSignIn = GoogleSignIn();
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
         if (googleUser != null) {
           final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-          String firstName ='';
-          String lastName ='';
-            List<String> nameParts = googleUser.displayName!.split(' ');
-            if (nameParts.length > 1) {
-                firstName = nameParts[0];
-                lastName = nameParts.sublist(1).join(' ');
-            } else {
-              firstName = nameParts[0];
-            }
-          final credential = auth.GoogleAuthProvider.credential(accessToken: googleAuth.accessToken, idToken: googleAuth.idToken,);
-          auth.UserCredential userCredential = await auth.FirebaseAuth.instance.signInWithCredential(credential);
-          final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
 
-          User newUser = User(
-            id: userCredential.user?.uid,
-            firstName: firstName,
-            lastName: lastName,
-            telephone: null,
-            address: null,
-            password: null,
-            role: 'user',
-            email: googleUser.email,
-            registrationDate: DateTime.now(),
-            lastLogin: DateTime.now(),
-            photoUrl: googleUser.photoUrl,
+          // Extract user details
+          String firstName = '';
+          String lastName = '';
+          List<String> nameParts = googleUser.displayName?.split(' ') ?? [];
+          if (nameParts.isNotEmpty) {
+            firstName = nameParts[0];
+            lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+          }
+
+          // Create credentials for Firebase Authentication
+          final credential = auth.GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
           );
 
-          // Save user data to Firestore
-          await usersCollection.doc(userCredential.user?.uid).set(newUser.toMap());
-          // Navigate to the HomeScreen after successful login
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeScreen()),);
+          // Sign in with Firebase using the Google credentials
+          auth.UserCredential userCredential =
+          await auth.FirebaseAuth.instance.signInWithCredential(credential);
+
+          // Check if the user is new or existing
+          if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+            // New user - save user data to Firestore
+            final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
+            await usersCollection.doc(userCredential.user?.uid).set({
+              'id': userCredential.user?.uid,
+              'firstName': firstName,
+              'lastName': lastName,
+              'email': googleUser.email,
+              'photoUrl': googleUser.photoUrl,
+              'role': 'user',
+              'registrationDate': DateTime.now(),
+              'lastLogin': DateTime.now(),
+            }, SetOptions(merge: true));
+          } else {
+            // Existing user - update their last login time
+            await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).update({
+              'lastLogin': DateTime.now(),
+            });
+          }
+
+          // Navigate to the home screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()), // Replace with your home screen
+          );
         }
       } catch (e) {
-        // Handle errors, e.g., display an error message
-        print(e); // For debugging
-      }
-    }
-
-    Future<void> signInWithEmailAndPassword(BuildContext context) async {
-      try {
-
-        // Navigate to the HomeScreen after successful login
-        Navigator.pushReplacementNamed(context, '/home');
-
-      } catch (e) {
-        // Handle login errors, e.g., display an error message
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login failed. Please check your credentials.')));
+        // Show an error message if Google Sign-In fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google Sign-In failed: $e')),
+        );
       }
     }
 
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
-      body: Center(
-        child: Card(
-          margin: const EdgeInsets.all(20),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: SingleChildScrollView( // Wrap the Column with SingleChildScrollView
+      backgroundColor: const Color(0xFF394773), // Blue background color
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Main Column Layout
+            Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Image.asset('assets/logo.png', width: 100, height: 100),
+                children: [
+                  // Logo and Title
+                  Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      Image.asset(
+                        'assets/login_logo.png', // Add your logo image to assets
+                        width: 200,
+                        height: 200,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Email Login Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // Navigate to Email Login (implement this if needed)
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF394773),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        icon: const Icon(Icons.email),
+                        label: const Text(
+                          'Se connecter avec mon Email',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 20),
-                  TextField(
-                    controller: emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
+                  const Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white70,
+                          thickness: 1,
+                          indent: 80,
+                          endIndent: 10,
+                        ),
+                      ),
+                      Text(
+                        'ou continuer avec',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white70,
+                          thickness: 1,
+                          indent: 10,
+                          endIndent: 80,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        signInWithEmailAndPassword(context); // Call the login function
-                      },
-                      icon: const Icon(Icons.login),
-                      label: const Text('Login'),
-                    ),
+
+                  // Social Media Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      socialButton('assets/facebook.png', () {}),
+                      const SizedBox(width: 20),
+                      socialButton('assets/google.png', () => signInWithGoogle()),
+                      const SizedBox(width: 20),
+                      socialButton('assets/apple.png', () {}),
+                    ],
                   ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Call the registration function
-                        Navigator.pushNamed(context, '/registration_screen');
-                      },
-                      icon: const Icon(Icons.person_add),
-                      label: const Text('Register'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => signInWithGoogle(),
-                      icon: const Icon(Icons.g_mobiledata),
-                      label: const Text('Sign in with Google'),
-                    ),
-                  ),
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
-          ),
+
+            // Bottom Section for Account Creation
+            Positioned(
+              bottom: 60,
+              left: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: () {
+                  // Navigate to CreateAccountScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RegistrationScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Vous N'avez pas de Compte ?",
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Social Media Button Widget
+  Widget socialButton(String imagePath, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: CircleAvatar(
+        radius: 25,
+        backgroundColor: Colors.white,
+        child: Image.asset(
+          imagePath,
+          width: 30,
+          height: 30,
         ),
       ),
     );
