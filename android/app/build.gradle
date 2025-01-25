@@ -58,7 +58,6 @@ flutter {
 
 dependencies {
     implementation 'com.android.support:multidex:1.0.3'
-
     // Firebase and Google dependencies
     implementation 'com.google.android.gms:play-services-auth:20.5.0' // Google Sign-In SDK
     implementation 'com.google.firebase:firebase-auth:21.2.0' // Firebase Authentication
