@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:heritage/authentication/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:heritage/utiles/dialog_utils.dart';
-import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
@@ -14,165 +12,130 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController firstNameController = TextEditingController();
-  TextEditingController lastNameController = TextEditingController();
-  TextEditingController addressController = TextEditingController();
 
   bool _isPasswordVisible = false;
 
   Future<void> register(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       try {
-        auth.UserCredential userCredential = await auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: emailController.text,
-          password: passwordController.text,
+        auth.UserCredential userCredential = await auth.FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
         );
 
-        String? userId = userCredential.user?.uid; // Get the user ID
+        String? userId = userCredential.user?.uid;
 
-        User newUser = User(
-          id: userId,
-          firstName: firstNameController.text,
-          lastName: lastNameController.text,
-          telephone: '',
-          address: addressController.text,
-          password: passwordController.text,
-          role: 'user',
-          email: emailController.text,
-          registrationDate: DateTime.now(),
-          lastLogin: DateTime.now(),
-          photoUrl: '',
-        );
-        final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
+        // Save user data to Firestore
+        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+          'id': userId,
+          'firstName': firstNameController.text.trim(),
+          'email': emailController.text.trim(),
+          'role': 'user',
+          'registrationDate': DateTime.now(),
+        });
 
-        // Save user data to FireStore
-        await usersCollection.doc(newUser.id).set(newUser.toMap());
-
-        // Navigate to the HomeScreen after successful registration
         Navigator.pushReplacementNamed(context, '/home');
       } catch (e) {
-        // Handle registration errors
-        String errorMessage = 'Registration failed. Please try again.';
-        if (e is auth.FirebaseAuthException) {
-          switch (e.code) {
-            case 'weak-password':
-              errorMessage = 'The password provided is too weak.';
-              break;
-            case 'email-already-in-use':
-              errorMessage = 'The account already exists for that email.';
-              break;
-            case 'invalid-email':
-              errorMessage = 'The email address is not valid.';
-              break;
-          // Add more cases to handle other error codes if needed
-          }
-        }
-
-        DialogUtils.showCustomDialog(context, 'Registration failed', errorMessage, Icons.error, Colors.red);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed: ${e.toString()}')),
+        );
       }
+    }
+  }
+
+  Future<void> signInWithGoogle(BuildContext context) async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) return;
+
+      final GoogleSignInAuthentication googleAuth =
+      await googleUser.authentication;
+
+      final auth.AuthCredential credential = auth.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await auth.FirebaseAuth.instance.signInWithCredential(credential);
+
+      Navigator.pushReplacementNamed(context, '/home');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google Sign-In failed: ${e.toString()}')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const SizedBox(height: 50),
-                  const Text(
-                    'Register with Email and Password',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: firstNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'First Name',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return 'Please enter your first name';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: lastNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Last Name',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return 'Please enter your last name';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!isValidEmail(value)) {
-                        return 'Please enter a valid email address';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  IntlPhoneField(
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      border: OutlineInputBorder(),
-                    ),
-                    initialCountryCode: 'MA',
-                    validator: (value) {
+    // Calculate 10% bigger width for inputs
+    double screenWidth = MediaQuery.of(context).size.width;
+    double inputWidth = screenWidth * 0.9; // 90% of screen width
 
-                      if (!isValidPhoneNumber(value!.completeNumber)) {
-                        return 'Please enter a valid phone number';
-                      }
-                      return null;
-                    },
-                    onChanged: (phone) {
-                      print(phone.completeNumber);
-                    },
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Sign Up with Email',
+          style: TextStyle(color: Colors.black, fontSize: 16),
+        ),
+        automaticallyImplyLeading: false, // Removes the back arrow
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.blueGrey),
+            onPressed: () {
+              Navigator.pop(context); // Close the registration screen
+            },
+          ),
+        ],
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Full Name Input
+                SizedBox(
+                  width: inputWidth,
+                  child: TextField(
+                    controller: firstNameController,
+                    decoration: _buildInputDecoration('Full Name'),
                   ),
-                  const SizedBox(height: 10),
-                  TextFormField(
+                ),
+                const SizedBox(height: 20),
+                // Email Input
+                SizedBox(
+                  width: inputWidth,
+                  child: TextField(
+                    controller: emailController,
+                    decoration: _buildInputDecoration('Email'),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Password Input
+                SizedBox(
+                  width: inputWidth,
+                  child: TextField(
                     controller: passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
+                    obscureText: !_isPasswordVisible,
+                    decoration: _buildInputDecoration('Password').copyWith(
                       suffixIcon: IconButton(
-                        icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
                         onPressed: () {
                           setState(() {
                             _isPasswordVisible = !_isPasswordVisible;
@@ -180,38 +143,98 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                     ),
-                    obscureText: !_isPasswordVisible,
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters long';
-                      }
-                      return null;
-                    },
                   ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Address',
-                      border: OutlineInputBorder(),
+                ),
+                const SizedBox(height: 30),
+                // Sign Up Button
+                SizedBox(
+                  width: inputWidth,
+                  child: ElevatedButton(
+                    onPressed: () => register(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF394773),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
                     ),
-                    maxLines: null,
+                    child: const Text(
+                      'Sign Up',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14, // Smaller text size
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        register(context);
+                ),
+                const SizedBox(height: 30),
+                // Divider with "or Sign Up with"
+                SizedBox(
+                  width: inputWidth,
+                  child: Row(
+                    children: const [
+                      Expanded(child: Divider(color: Colors.grey, thickness: 1)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'or Sign Up with',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey, thickness: 1)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Social Login Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        // Add Facebook login logic if needed
                       },
-                      child: const Text('Register'),
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: Image.asset(
+                          'assets/facebook.png',
+                          width: 30,
+                          height: 30,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: () => signInWithGoogle(context),
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: Image.asset(
+                          'assets/google.png',
+                          width: 30,
+                          height: 30,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: () {
+                        // Add Apple login logic if needed
+                      },
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: Image.asset(
+                          'assets/apple.png',
+                          width: 30,
+                          height: 30,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -219,15 +242,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  bool isValidEmail(String email) {
-    // Add email validation logic here
-    // You can use regular expressions or any other validation method
-    return email.contains('@');
-  }
-
-  bool isValidPhoneNumber(String phoneNumber) {
-    // Add phone number validation logic here
-    // You can use regular expressions or any other validation method
-    return phoneNumber.length >= 10;
+  InputDecoration _buildInputDecoration(String labelText) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: const TextStyle(color: Colors.black54),
+      filled: true,
+      fillColor: const Color(0xFFF9F9F9),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(25.0),
+        borderSide: const BorderSide(color: Colors.grey, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(25.0),
+        borderSide: const BorderSide(color: Colors.blue, width: 2),
+      ),
+    );
   }
 }

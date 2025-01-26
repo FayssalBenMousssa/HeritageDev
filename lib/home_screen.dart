@@ -96,6 +96,9 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+
+
+
   Widget _buildCategoryListItem(BuildContext context,Category category) {
     return Container(
       width: 100,
@@ -139,7 +142,7 @@ class HomeScreen extends StatelessWidget {
                   Navigator.pushNamed(
                     context,
                     '/photo_book_client',
-                    arguments: {'category': category}, // Example argument
+                    arguments: {'category': category}, // Pass the selected category
                   );
                 },
 

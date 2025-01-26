@@ -1,12 +1,8 @@
-
-import 'dart:developer';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:heritage/photo_book/models/category.dart';
 import 'package:heritage/photo_book/models/template.dart';
-
-import '../../models/price.dart';
 import 'creation_photo_book_screen.dart';
 
 class TemplateClientScreen extends StatefulWidget {
@@ -17,117 +13,202 @@ class TemplateClientScreen extends StatefulWidget {
 }
 
 class _TemplateClientScreenState extends State<TemplateClientScreen> {
+  Category? selectedCategory;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Retrieve the selected category from the arguments
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args['category'] != null) {
+      selectedCategory = args['category'] as Category;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    final Category? category = args?['category'] as Category?;
-
-    log('--------------------');
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Photo Books'),
-      ),
-      body: StreamBuilder<List<Template>>(
-        stream: _getFilteredTemplatesStream(category),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text('No photo books found'),
-            );
-          }
-
-          List<Template> _photoBooks = snapshot.data!;
-
-          return GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, // Number of columns in the grid
-              crossAxisSpacing: 10.0, // Space between columns
-              mainAxisSpacing: 10.0, // Space between rows
-              childAspectRatio: 1.0, // Aspect ratio of each item (1:1)
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 15), // Smaller icon size
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        title: const Row(
+          children: [
+            SizedBox(width: 0), // Space between icon and text is now 4 pixels
+            Text(
+              'Photobook pour chaque moment',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            itemCount: _photoBooks.length,
-            itemBuilder: (context, index) {
-              Template photoBook = _photoBooks[index];
-              return _buildTemplateGridItem(photoBook);
-            },
-          );
-        },
+          ],
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        titleSpacing: 0, // Reduce default spacing between leading icon and title
+      ),
+      body: Column(
+        children: [
+          _buildCategoryList(),
+          Expanded(
+            child: _buildPhotoBookGrid(),
+          ),
+        ],
       ),
     );
   }
 
-  Stream<List<Template>> _getFilteredTemplatesStream(Category? category) {
-    final CollectionReference photoBooksCollection = FirebaseFirestore.instance.collection('photoBooks');
+  Widget _buildCategoryList() {
+    final CollectionReference categoriesCollection = FirebaseFirestore.instance.collection('categories');
 
-    return photoBooksCollection.snapshots().map((snapshot) {
-      List<Template> photoBooks = snapshot.docs
-          .map((doc) => Template.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+    return StreamBuilder<QuerySnapshot>(
+      stream: categoriesCollection.snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          );
+        }
 
-      if (category != null) {
-        photoBooks = photoBooks
-            .where((photoBook) => photoBook.categories.any((cat) => cat.id == category.id))
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        List<Category> categories = snapshot.data!.docs
+            .map((doc) => Category.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
-      }
 
-      return photoBooks;
-    });
+        // Add "All" option at the beginning of the list
+        categories.insert(0, Category(id: 'all', categoryName: 'All', imageUrl: ''));
+
+        return Container(
+          height: 50,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: Colors.grey.withOpacity(0.5), // 50% transparent top border
+                width: 1.0, // Thickness of the top border line
+              ),
+              bottom: BorderSide(
+                color: Colors.grey.withOpacity(0.5), // 50% transparent bottom border
+                width: 1.0, // Thickness of the bottom border line
+              ),
+            ),
+          ),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              Category category = categories[index];
+              return _buildCategoryItem(category);
+            },
+          ),
+        );
+      },
+    );
   }
 
-  Widget _buildTemplateGridItem(Template photoBook) {
+  Widget _buildCategoryItem(Category category) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          // If "All" is selected, set selectedCategory to null
+          selectedCategory = category.id == 'all' ? null : category;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        child: Center(
+          child: Text(
+            category.categoryName,
+            style: TextStyle(
+              color: selectedCategory?.id == category.id || (category.id == 'all' && selectedCategory == null)
+                  ? Colors.blue
+                  : Colors.black,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoBookGrid() {
+    final CollectionReference photoBooksCollection = FirebaseFirestore.instance.collection('photoBooks');
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: photoBooksCollection.snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        List<Template> photoBooks = snapshot.data!.docs
+            .map((doc) => Template.fromMap(doc.data() as Map<String, dynamic>))
+            .toList();
+
+        // Filter photo books based on the selected category
+        if (selectedCategory != null) {
+          photoBooks = photoBooks
+              .where((photoBook) => photoBook.categories.any((cat) => cat.id == selectedCategory!.id))
+              .toList();
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(left: 35.0, right: 35.0, top: 30.0), // Add padding here
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10.0,
+              mainAxisSpacing: 10.0,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: photoBooks.length,
+            itemBuilder: (context, index) {
+              Template photoBook = photoBooks[index];
+              return _buildPhotoBookItem(photoBook);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPhotoBookItem(Template photoBook) {
     return GestureDetector(
       onTap: () => _showTemplateDialog(photoBook),
       child: Card(
-        elevation: 1,
+        elevation: 0, // Remove shadow by setting elevation to 0
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(2.0),
+          borderRadius: BorderRadius.zero, // Remove border radius
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
+                borderRadius: BorderRadius.zero, // Remove border radius
                 child: photoBook.coverImageUrl.isNotEmpty
-                    ? Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.network(
-                      photoBook.coverImageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                        if (loadingProgress == null) {
-                          return child;
-                        } else {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                                  : null,
-                            ),
-                          );
-                        }
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.error, color: Colors.red),
-                        );
-                      },
-                    ),
-                    // Optionally, you can add an overlay or additional UI here
-                  ],
+                    ? Image.network(
+                  photoBook.coverImageUrl,
+                  fit: BoxFit.cover,
                 )
                     : Container(
                   color: Colors.grey,
@@ -142,46 +223,20 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    photoBook.title,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8.0), // Add spacing between title and lowest price
-                  Text(
-                    getLowestPriceText(photoBook.price), // Use the function here
-                    style: const TextStyle(fontSize: 14.0),
-                  ),
-                ],
+              child: Text(
+                photoBook.title,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center, // Center the text
               ),
-            )
-
+            ),
           ],
         ),
       ),
     );
   }
 
-
-  String getLowestPriceText(List<Price> prices) {
-    if (prices.isEmpty) {
-      return 'No prices available';
-    }
-
-    final lowestPrice = prices.reduce((current, next) =>
-    (current.value + current.coverPrice + current.sizePrice) <
-        (next.value + next.coverPrice + next.sizePrice)
-        ? current
-        : next);
-
-    return 'Price begin with: \$${(lowestPrice.value + lowestPrice.coverPrice + lowestPrice.sizePrice).toStringAsFixed(2)}';
-  }
-
   void _showTemplateDialog(Template photoBook) {
-    // Define a list of random image URLs
     final List<String> randomImageUrls = [
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',
       'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700',
@@ -193,42 +248,19 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
       context: context,
       builder: (context) {
         return Dialog(
-          insetPadding: const EdgeInsets.all(5), // Remove default padding
+          insetPadding: const EdgeInsets.all(5),
           child: Container(
-            width: 400, // Width of the dialog
-            height: 400, // Height of the dialog
+            width: 400,
+            height: 400,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Expanded(
                   child: PageView(
                     children: randomImageUrls.map((url) {
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.network(
-                            url,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                              if (loadingProgress == null) {
-                                return child;
-                              } else {
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                                        : null,
-                                  ),
-                                );
-                              }
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Icon(Icons.error, color: Colors.red),
-                              );
-                            },
-                          ),
-                        ],
+                      return Image.network(
+                        url,
+                        fit: BoxFit.cover,
                       );
                     }).toList(),
                   ),
@@ -248,7 +280,7 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pop(); // Close the dialog
+                          Navigator.of(context).pop();
                           Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => CreationPhotoBookScreen(photoBook: photoBook),
                           ));
@@ -265,9 +297,4 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
       },
     );
   }
-
-
-
-
-
 }
