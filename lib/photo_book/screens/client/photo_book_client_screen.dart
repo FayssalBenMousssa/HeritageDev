@@ -76,7 +76,7 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         }
@@ -124,11 +124,11 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Reduced horizontal padding
+        margin: const EdgeInsets.symmetric(horizontal: 2), // Reduced horizontal margin
         child: Center(
           child: Text(
-            category.categoryName,
+            category.categoryName.toUpperCase(),
             style: TextStyle(
               color: selectedCategory?.id == category.id || (category.id == 'all' && selectedCategory == null)
                   ? Colors.blue
@@ -141,7 +141,6 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
       ),
     );
   }
-
   Widget _buildPhotoBookGrid() {
     final CollectionReference photoBooksCollection = FirebaseFirestore.instance.collection('photoBooks');
 
@@ -235,64 +234,245 @@ class _TemplateClientScreenState extends State<TemplateClientScreen> {
       ),
     );
   }
-
   void _showTemplateDialog(Template photoBook) {
-    final List<String> randomImageUrls = [
-      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',
-      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700',
-      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-1-FR.jpg?d=700x700',
-      'https://www.photobox.fr/product-pictures/PAP_130/product-page-slider/image-slider-2-FR.jpg?d=700x700'
+    // Use photoBook.miniature and photoBook.coverImageUrl for the images
+    final List<String> photoBookImages = [
+      photoBook.miniature,
+      photoBook.coverImageUrl,
     ];
+
+    // Track the current page index
+    int currentPageIndex = 0;
+
+    // Track selected values for TAILLE and COUVERTURE
+    String? selectedTaille;
+    String? selectedCouverture;
 
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          insetPadding: const EdgeInsets.all(5),
-          child: Container(
-            width: 400,
-            height: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Expanded(
-                  child: PageView(
-                    children: randomImageUrls.map((url) {
-                      return Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                      );
-                    }).toList(),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        photoBook.title,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(5),
+              child: Container(
+                width: 500, // Increased width for bigger images
+                height: 600, // Increased height for bigger images and details
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                      child: PageView(
+                        onPageChanged: (index) {
+                          setState(() {
+                            currentPageIndex = index; // Update the current page index
+                          });
+                        },
+                        children: photoBookImages.map((url) {
+                          return Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    // Add a number indicator (e.g., 1/2, 2/2) under the image
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        '${currentPageIndex + 1} / ${photoBookImages.length}', // Display current page number
                         style: const TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          color: Colors.grey, // Grey text color
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => CreationPhotoBookScreen(photoBook: photoBook),
-                          ));
-                        },
-                        child: const Text('Create Photo Book'),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Title and Price in the same line
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                photoBook.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.grey, // Grey text color
+                                ),
+                              ),
+                              Text(
+                                '${photoBook.price.isNotEmpty ? photoBook.price.first.value : 0} dhs',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey, // Grey text color
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // TAILLE and COUVERTURE in the same line with dropdowns
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // TAILLE Dropdown
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'TAILLE : ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[700], // Darker grey for labels
+                                    ),
+                                  ),
+                                  DropdownButton<String>(
+                                    value: selectedTaille,
+                                    hint: Text(
+                                      photoBook.size.isNotEmpty
+                                          ? '${photoBook.size.first.dimensions}x${photoBook.size.first.dimensions} cm'
+                                          : 'N/A',
+                                      style: const TextStyle(
+                                        color: Colors.grey, // Grey text color
+                                      ),
+                                    ),
+                                    items: photoBook.size.map((size) {
+                                      return DropdownMenuItem<String>(
+                                        value: '${size.dimensions} ',
+                                        child: Text(
+                                          '${size.dimensions} ',
+                                          style: const TextStyle(
+                                            color: Colors.grey, // Grey text color
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedTaille = value; // Update selected TAILLE
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              // COUVERTURE Dropdown
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'COUVERTURE : ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[700], // Darker grey for labels
+                                    ),
+                                  ),
+                                  DropdownButton<String>(
+                                    value: selectedCouverture,
+                                    hint: Text(
+                                      photoBook.coverFinish.isNotEmpty
+                                          ? photoBook.coverFinish.first.name
+                                          : 'N/A',
+                                      style: const TextStyle(
+                                        color: Colors.grey, // Grey text color
+                                      ),
+                                    ),
+                                    items: photoBook.coverFinish.map((cover) {
+                                      return DropdownMenuItem<String>(
+                                        value: cover.name,
+                                        child: Text(
+                                          cover.name,
+                                          style: const TextStyle(
+                                            color: Colors.grey, // Grey text color
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedCouverture = value; // Update selected COUVERTURE
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                           Text(
+                            'DETAILS:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700], // Darker grey for labels
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            'Le prix est appliqué sur les ${photoBook.numberPageInitial} premières pages.',
+                            style: const TextStyle(
+                              color: Colors.grey, // Grey text color
+                            ),
+                          ),
+                          const Text(
+                            'Ajout d\'une page : (+13 dhs 20x20cm) +23 dhs 27x27cm)',
+                            style: TextStyle(
+                              color: Colors.grey, // Grey text color
+                            ),
+                          ),
+                          Text(
+                            'Types d\'album: ${photoBook.type.isNotEmpty ? photoBook.type.first.name : 'N/A'}',
+                            style: const TextStyle(
+                              color: Colors.grey, // Grey text color
+                            ),
+                          ),
+                          Text(
+                            'Types de papier: ${photoBook.paperFinish.isNotEmpty ? photoBook.paperFinish.first.name : 'N/A'}',
+                            style: const TextStyle(
+                              color: Colors.grey, // Grey text color
+                            ),
+                          ),
+                          Text(
+                            'Tailles de l\'album: ${photoBook.size.isNotEmpty ? '${photoBook.size.first.dimensions}x${photoBook.size.first.dimensions} cm' : 'N/A'}',
+                            style: const TextStyle(
+                              color: Colors.grey, // Grey text color
+                            ),
+                          ),
+                          Text(
+                            'Longueur de l\'album: De ${photoBook.numberPageInitial} à 200 pages',
+                            style: const TextStyle(
+                              color: Colors.grey, // Grey text color
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Center the "Personnaliser" button
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => CreationPhotoBookScreen(photoBook: photoBook),
+                                ));
+                              },
+                              child: const Text(
+                                'Personnaliser',
+                                style: TextStyle(
+                                  color: Colors.white, // Keep button text white
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-              ],
-            ),
-          ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
